@@ -564,7 +564,7 @@
         // o conteúdo do card (banner + foto + textos) tem uma altura própria,
         // menor que 1920 — centraliza ele verticalmente no canvas pra não
         // sobrar aquela barra preta quando for compartilhado nos Stories
-        const ALTURA_CONTEUDO = 1620;
+        const ALTURA_CONTEUDO = 1680;
         const offsetY = Math.round((A - ALTURA_CONTEUDO) / 2);
         ctx.save();
         ctx.translate(0, offsetY);
@@ -616,8 +616,23 @@
         ctx.fillText(cargo, L / 2, yPilula + 31);
         ctx.textBaseline = 'alphabetic';
 
+        // ---- nome de quem preencheu, logo abaixo do cargo ----
+        const nomeAluno = (dadosCard.n || '').trim();
+        if (nomeAluno) {
+          const larguraMaxNome = L - 2 * 90;
+          let fonteAluno = 46;
+          ctx.font = '800 ' + fonteAluno + 'px Inter, Arial, sans-serif';
+          while (ctx.measureText(nomeAluno).width > larguraMaxNome && fonteAluno > 26) {
+            fonteAluno -= 2;
+            ctx.font = '800 ' + fonteAluno + 'px Inter, Arial, sans-serif';
+          }
+          ctx.fillStyle = '#10224a';
+          ctx.textAlign = 'center';
+          ctx.fillText(nomeAluno, L / 2, yPilula + 116);
+        }
+
         // ---- cartão branco: nome da empresa + slogan ----
-        const yCartaoEmpresa = yPilula + 100;
+        const yCartaoEmpresa = yPilula + (nomeAluno ? 160 : 100);
         const alturaCartaoEmpresa = 165;
         const margemLateral = 76;
         ctx.save();
