@@ -1,0 +1,2598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0E3880">
+  <link rel="icon" type="image/png" href="./favicon.png">
+  <title>Crie sua Empresa em 1 Minuto — Curso de Administração</title>
+
+  <!--
+    ============================================================
+    BLOCO 1 + BLOCO 2 (v4 — cabeçalho/rodapé únicos + tela de cadastro)
+    ============================================================
+    A partir desta versão, o <header class="topo"> e o <footer
+    class="rodape"> existem UMA VEZ SÓ no HTML, fora das telas — antes,
+    cada tela nova que chegava (boas-vindas, cadastro...) trazia sua
+    própria cópia do cabeçalho, e isso é exatamente o que causou a
+    logo antiga do CRA voltar no arquivo do cadastro: a edição feita
+    numa cópia não chegava nas outras. Agora qualquer ajuste no
+    cabeçalho/rodapé vale para todas as telas de uma vez.
+
+    Estrutura:
+    - .pagina > .topo (fixo) + .palco (troca de tela) + .rodape (fixo)
+    - .palco contém uma .screen para cada etapa; só a que tiver
+      .screen--ativa aparece (mesmo sistema do Bloco 1, agora com uma
+      tela de verdade usando a variante --coluna: o cadastro).
+    - Também corrigido: as regras de "1 coluna no celular" para o
+      card de boas-vindas e do cadastro tinham especificidade CSS
+      menor que a regra que define a grade de 2 colunas, então nunca
+      chegavam a fazer efeito no celular — ambas foram alinhadas.
+    ============================================================
+  -->
+
+  <style>
+    :root {
+      --azul: #0E3880;
+      --azul-escuro: #08295f;
+      --azul-medio: #2d66c3;
+      --azul-claro: #bdd7ff;
+      --azul-nevoa: #f3f7ff;
+      --branco: #ffffff;
+      --texto: #10224a;
+      --texto-suave: #536383;
+      --borda: rgba(14, 56, 128, 0.10);
+      --sombra: 0 24px 60px rgba(14, 56, 128, 0.14);
+      --sombra-botao: 0 18px 36px rgba(14, 56, 128, 0.28);
+      --raio-btn: 18px;
+      --sombra-forte: 0 16px 40px rgba(14, 56, 128, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      min-height: 100%;
+    }
+
+    body {
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 15% 35%, rgba(189, 215, 255, 0.20), transparent 26rem),
+        radial-gradient(circle at 88% 60%, rgba(14, 56, 128, 0.07), transparent 26rem),
+        #ffffff;
+      color: var(--texto);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .pagina {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px clamp(20px, 5vw, 72px) 18px;
+    }
+
+    /* ===== Cabeçalho — único no arquivo, igual em toda tela ===== */
+    .topo {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .marca {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .marca--direita {
+      justify-content: flex-end;
+    }
+
+    .logo-faculdade {
+      width: 58px;
+      height: 58px;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+
+    .marca-texto {
+      line-height: 1.18;
+    }
+
+    .marca-titulo {
+      color: var(--azul);
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .marca-subtitulo {
+      margin-top: 4px;
+      color: var(--texto-suave);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    /* Logo "ISECENSA Administração" — usada no cabeçalho e também
+       dentro do cartão de cadastro (em branco, sobre o fundo azul). */
+    .logo-administracao {
+      height: 58px;
+      width: auto;
+      object-fit: contain;
+      flex: 0 0 auto;
+    }
+
+    /* ===== Palco — área central onde as telas trocam ===== */
+    .palco {
+      width: 100%;
+      max-width: 1180px;
+      margin: auto;
+      padding: clamp(28px, 5vh, 58px) 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+
+    /* ===== Sistema de telas =====
+       Cada etapa da experiência (boas-vindas, cadastro, pergunta 1-5,
+       processando, revelação) é uma .screen dentro de .palco. Só a
+       que tiver .screen--ativa fica visível. */
+    .screen {
+      display: none;
+    }
+    .screen.screen--ativa {
+      display: flex;
+      width: 100%;
+      animation: entra 0.4s ease;
+    }
+    @keyframes entra {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-card {
+      width: 100%;
+      min-height: 470px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--borda);
+      border-radius: 34px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(246,249,255,0.98));
+      box-shadow: var(--sombra);
+      padding: clamp(34px, 5vw, 66px);
+    }
+
+    /* Variante em grade de 2 colunas — usada na tela de boas-vindas */
+    .hero-card.screen.screen--ativa.hero-card--duas-colunas {
+      display: grid;
+      grid-template-columns: minmax(290px, 0.86fr) minmax(430px, 1.24fr);
+      align-items: center;
+      gap: clamp(28px, 5vw, 72px);
+    }
+
+    /* Variante em coluna única centralizada — usada na tela das 5 perguntas */
+    .hero-card.screen.screen--ativa.hero-card--coluna {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: clamp(16px, 3vh, 32px);
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      left: -125px;
+      top: -160px;
+      background: rgba(189, 215, 255, 0.27);
+      pointer-events: none;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      right: -80px;
+      bottom: -110px;
+      background: rgba(14, 56, 128, 0.06);
+      pointer-events: none;
+    }
+
+    .hero-visual {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .hero-visual::before {
+      content: "";
+      position: absolute;
+      width: min(27vw, 330px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #edf5ff, #ffffff);
+      box-shadow: inset 0 0 0 1px rgba(14,56,128,0.05);
+    }
+
+    .icone-hero {
+      position: relative;
+      z-index: 1;
+      width: min(25vw, 310px);
+      min-width: 220px;
+      filter: drop-shadow(0 18px 22px rgba(14, 56, 128, 0.12));
+    }
+
+    .hero-texto {
+      position: relative;
+      z-index: 1;
+      min-width: 0;
+    }
+
+    .selo-topo {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--azul);
+      background: #eaf2ff;
+      border: 1px solid #cfdef6;
+      border-radius: 999px;
+      padding: 8px 13px;
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    .ponto {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3e82ef;
+      box-shadow: 0 0 0 4px rgba(62,130,239,0.13);
+    }
+
+    h1 {
+      max-width: 720px;
+      color: var(--azul);
+      font-size: clamp(38px, 4.3vw, 66px);
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .pergunta {
+      margin-top: 22px;
+      color: var(--texto);
+      font-size: clamp(18px, 1.65vw, 25px);
+      line-height: 1.35;
+      font-weight: 750;
+      max-width: 690px;
+    }
+
+    .descricao {
+      margin-top: 13px;
+      color: var(--texto-suave);
+      font-size: clamp(15px, 1.25vw, 18px);
+      line-height: 1.55;
+      max-width: 670px;
+    }
+
+    .descricao strong {
+      color: var(--azul);
+    }
+
+    .cta-area {
+      margin-top: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .btn-touque {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: clamp(15px, min(2.4vw, 2.8vh), 28px);
+      color: var(--branco);
+      background: var(--azul);
+      padding: clamp(10px, 1.8vh, 26px) clamp(24px, 6vw, 72px);
+      border-radius: var(--raio-btn);
+      box-shadow: var(--sombra-forte);
+      min-height: clamp(48px, 8vh, 76px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      animation: pulsa 2.4s ease-in-out infinite;
+    }
+
+    .btn-touque:active {
+      transform: scale(0.96);
+      background: var(--azul-escuro);
+      box-shadow: var(--sombra);
+      animation: none;
+    }
+
+    @keyframes pulsa {
+      0%, 100% { box-shadow: var(--sombra-forte); }
+      50% { box-shadow: 0 16px 46px rgba(14, 56, 128, 0.4); }
+    }
+
+    /* Variante secundária — para "voltar" / "trocar resposta" */
+    .btn-touque--secundario {
+      background: var(--branco);
+      color: var(--azul);
+      border: 2px solid var(--azul-claro);
+      box-shadow: none;
+      animation: none;
+      font-size: clamp(15px, 1.6vw, 18px);
+      padding: 12px 26px;
+      min-height: 52px;
+    }
+    .btn-touque--secundario:active {
+      background: var(--azul-nevoa);
+      transform: scale(0.97);
+    }
+
+    /* Barra de progresso — pronta para o Bloco 3 ("pergunta 2 de 5") */
+    .progresso-track {
+      width: 100%;
+      max-width: 420px;
+      height: 10px;
+      background: var(--azul-nevoa);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progresso-fill {
+      height: 100%;
+      background: var(--azul);
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    .microinfos {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      color: var(--texto-suave);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .microinfos span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .microinfos span + span::before {
+      content: "•";
+      color: #8ea8d2;
+      margin-right: 4px;
+    }
+
+    /* ===== Rodapé — único no arquivo ===== */
+    .rodape {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding-top: 4px;
+      text-align: center;
+      color: var(--texto-suave);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .rodape strong {
+      color: var(--azul);
+    }
+
+    /* Toast de feedback rápido, reaproveitável por qualquer tela */
+    .aviso {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translate(-50%, 18px);
+      max-width: min(92vw, 620px);
+      padding: 14px 18px;
+      border-radius: 14px;
+      color: #fff;
+      background: rgba(8, 41, 95, 0.96);
+      box-shadow: 0 18px 44px rgba(8, 41, 95, 0.28);
+      font-weight: 650;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .25s ease;
+      text-align: center;
+      z-index: 30;
+    }
+
+    .aviso.visivel {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    /* ==========================================================
+       AVISO DE INATIVIDADE — reseta o totem sozinho quando ninguém
+       mexe por um tempo, pra não travar numa tela de outro aluno
+       ========================================================== */
+    .overlay-inatividade {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 41, 95, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+      z-index: 60;
+    }
+
+    .overlay-inatividade.visivel {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .overlay-inatividade-caixa {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 40px 32px 34px;
+      text-align: center;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    .overlay-inatividade-emoji {
+      font-size: 40px;
+    }
+
+    .overlay-inatividade-caixa h2 {
+      margin-top: 10px;
+      color: var(--texto);
+      font-size: 22px;
+    }
+
+    .overlay-inatividade-texto {
+      margin-top: 8px;
+      color: var(--texto-suave);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .overlay-inatividade-numero {
+      font-size: 60px;
+      font-weight: 800;
+      color: var(--azul);
+      margin: 8px 0 18px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .overlay-inatividade-caixa .btn-touque {
+      width: 100%;
+    }
+
+    /* ==========================================================
+       TELA 2 — CADASTRO DO ALUNO
+       ========================================================== */
+    .cadastro-card {
+      width: 100%;
+      min-height: 570px;
+      overflow: hidden;
+      border-radius: 32px;
+      border: 1px solid rgba(14, 56, 128, .10);
+      background: #fff;
+      box-shadow: 0 26px 70px rgba(14, 56, 128, .14);
+    }
+
+    .cadastro-card.screen.screen--ativa {
+      display: grid;
+      grid-template-columns: minmax(300px, .78fr) minmax(480px, 1.22fr);
+    }
+
+    .cadastro-info {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(34px, 4.5vw, 58px);
+      color: #fff;
+      background: linear-gradient(155deg, #0e3880 0%, #08295f 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 30px;
+    }
+
+    .cadastro-info::before,
+    .cadastro-info::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .cadastro-info::before {
+      width: 260px;
+      height: 260px;
+      right: -120px;
+      top: -95px;
+      background: rgba(102, 170, 255, .20);
+    }
+
+    .cadastro-info::after {
+      width: 180px;
+      height: 180px;
+      left: -90px;
+      bottom: -85px;
+      background: rgba(255, 255, 255, .07);
+    }
+
+    .cadastro-info-conteudo,
+    .cadastro-info-rodape {
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-admin-cadastro {
+      width: min(100%, 250px);
+      max-height: 84px;
+      object-fit: contain;
+      object-position: left center;
+      margin-bottom: 30px;
+      filter: brightness(0) invert(1);
+    }
+
+    .etapa-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .etapa-tag::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #7cb7ff;
+      box-shadow: 0 0 0 4px rgba(124,183,255,.14);
+    }
+
+    .cadastro-info h2 {
+      font-size: clamp(34px, 3.5vw, 52px);
+      line-height: 1.02;
+      letter-spacing: -.045em;
+      margin-bottom: 18px;
+      overflow-wrap: anywhere;
+    }
+
+    .cadastro-info p {
+      color: rgba(255,255,255,.82);
+      font-size: 16px;
+      line-height: 1.55;
+      max-width: 430px;
+    }
+
+    .cadastro-beneficios {
+      margin-top: 28px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .cadastro-beneficio {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      color: rgba(255,255,255,.90);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .cadastro-beneficio strong {
+      color: #fff;
+    }
+
+    .cadastro-info-rodape {
+      color: rgba(255,255,255,.62);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .cadastro-form-area {
+      padding: clamp(34px, 4.8vw, 62px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .cadastro-form-topo {
+      margin-bottom: 26px;
+    }
+
+    .cadastro-form-topo h3 {
+      color: var(--azul);
+      font-size: clamp(25px, 2.4vw, 34px);
+      line-height: 1.1;
+      letter-spacing: -.03em;
+      margin-bottom: 8px;
+    }
+
+    .cadastro-form-topo p {
+      color: var(--texto-suave);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .barra-etapas {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .barra-etapas span {
+      height: 6px;
+      border-radius: 999px;
+      background: #e7edf7;
+      flex: 1;
+    }
+
+    .barra-etapas span.ativa { background: var(--azul); }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .campo--inteiro { grid-column: 1 / -1; }
+
+    .campo label,
+    .grupo-label {
+      color: #24365f;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .obrigatorio { color: #d14a54; }
+
+    .campo input,
+    .campo select {
+      width: 100%;
+      min-height: 52px;
+      border: 1.5px solid #dce5f3;
+      background: #fbfdff;
+      border-radius: 14px;
+      padding: 0 15px;
+      color: var(--texto);
+      outline: none;
+      font-size: 15px;
+      transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .campo input::placeholder { color: #98a6bf; }
+
+    .campo input:focus,
+    .campo select:focus {
+      border-color: #5a8ad6;
+      box-shadow: 0 0 0 4px rgba(90, 138, 214, .12);
+      background: #fff;
+    }
+
+    .campo-ajuda {
+      color: #7b88a2;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .sexo-opcoes {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .radio-card {
+      position: relative;
+    }
+
+    .radio-card input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .radio-card label {
+      min-height: 50px;
+      padding: 10px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 1.5px solid #dce5f3;
+      border-radius: 13px;
+      background: #fbfdff;
+      color: #536383;
+      font-size: 12px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: .16s ease;
+    }
+
+    .radio-card input:checked + label {
+      color: var(--azul);
+      border-color: #6f98dc;
+      background: #eef4ff;
+      box-shadow: 0 0 0 3px rgba(90,138,214,.08);
+    }
+
+    .consentimento-box {
+      margin-top: 22px;
+      padding: 17px 18px;
+      border-radius: 16px;
+      background: #f6f9fe;
+      border: 1px solid #e1e9f5;
+      display: grid;
+      gap: 12px;
+    }
+
+    .check-linha {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 11px;
+      align-items: start;
+    }
+
+    .check-linha input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--azul);
+      margin-top: 2px;
+      cursor: pointer;
+    }
+
+    .check-linha label {
+      color: #536383;
+      font-size: 12px;
+      line-height: 1.5;
+      cursor: pointer;
+    }
+
+    .check-linha label strong { color: #24365f; }
+
+    .acoes-cadastro {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .btn-voltar {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #62718e;
+      font-weight: 750;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 12px 4px;
+    }
+
+    .btn-voltar:hover { color: var(--azul); }
+
+    .btn-continuar {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      min-height: 56px;
+      border-radius: 16px;
+      padding: 15px 24px;
+      color: white;
+      background: var(--azul);
+      box-shadow: 0 16px 30px rgba(14, 56, 128, .24);
+      font-weight: 800;
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: .16s ease;
+    }
+
+    .btn-continuar:hover {
+      transform: translateY(-1px);
+      background: var(--azul-escuro);
+      box-shadow: 0 19px 36px rgba(14, 56, 128, .29);
+    }
+
+    .btn-continuar:active { transform: scale(.98); }
+
+    .erro-form {
+      display: none;
+      margin-top: 13px;
+      padding: 11px 13px;
+      border-radius: 12px;
+      background: #fff2f3;
+      color: #a73742;
+      border: 1px solid #ffd5d9;
+      font-size: 12px;
+      line-height: 1.4;
+      font-weight: 650;
+    }
+
+    .erro-form.visivel { display: block; }
+
+    /* Tela de confirmação exibida logo após o cadastro, antes das perguntas */
+    .cadastro-ok-wrap {
+      width: 100%;
+      max-width: 720px;
+      text-align: center;
+      padding: 38px;
+      border-radius: 30px;
+      border: 1px solid rgba(14,56,128,.10);
+      background: #fff;
+      box-shadow: 0 24px 60px rgba(14,56,128,.13);
+    }
+
+    .cadastro-ok-wrap.screen.screen--ativa {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 720px;
+      margin: auto;
+    }
+
+    .check-grande {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: var(--azul);
+      font-size: 38px;
+      box-shadow: 0 16px 32px rgba(14,56,128,.22);
+    }
+
+    .cadastro-ok-wrap h2 {
+      color: var(--azul);
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.05;
+      margin-bottom: 12px;
+      letter-spacing: -.035em;
+    }
+
+    .cadastro-ok-wrap p {
+      color: var(--texto-suave);
+      line-height: 1.55;
+      margin-bottom: 24px;
+    }
+
+    /* ==========================================================
+       BLOCO 3 — AS 5 PERGUNTAS
+       ========================================================== */
+    .pergunta-topo-acoes {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto 6px;
+      text-align: left;
+    }
+
+    .btn-pergunta-voltar {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--texto-suave);
+      font-family: inherit;
+      font-weight: 750;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 6px 4px;
+    }
+
+    .btn-pergunta-voltar:hover {
+      color: var(--azul);
+    }
+
+    .pergunta-cabecalho {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .pergunta-contador {
+      color: var(--texto-suave);
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .pergunta-titulo {
+      color: var(--azul);
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 900;
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+      margin-top: 16px;
+    }
+
+    .opcoes-pergunta {
+      width: 100%;
+      max-width: 640px;
+      margin: 26px auto 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .opcao-pergunta {
+      appearance: none;
+      border: 1.5px solid #dce5f3;
+      background: #fbfdff;
+      border-radius: 16px;
+      padding: 17px 22px;
+      text-align: left;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--texto);
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease, box-shadow .15s ease, transform .1s ease;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 60px;
+    }
+
+    .opcao-pergunta:active {
+      transform: scale(0.98);
+    }
+
+    .opcao-pergunta.selecionada {
+      border-color: var(--azul);
+      background: #eef4ff;
+      color: var(--azul);
+      box-shadow: 0 0 0 3px rgba(90, 138, 214, .15);
+    }
+
+    .opcao-emoji {
+      font-size: 22px;
+      flex: 0 0 auto;
+    }
+
+    /* ==========================================================
+       TELA — PROCESSANDO
+       ========================================================== */
+    .spinner-processando {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 22px;
+      border-radius: 50%;
+      border: 6px solid var(--azul-nevoa);
+      border-top-color: var(--azul);
+      animation: girar 0.9s linear infinite;
+    }
+
+    @keyframes girar {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ==========================================================
+       TELA — REVELAÇÃO DA EMPRESA
+       ========================================================== */
+    .revelacao-wrap {
+      width: 100%;
+      max-width: 760px;
+      text-align: center;
+      padding: clamp(32px, 5vw, 56px);
+      border-radius: 34px;
+      border: 1px solid var(--borda);
+      background: linear-gradient(160deg, rgba(255,255,255,0.98), rgba(246,249,255,0.98));
+      box-shadow: var(--sombra);
+    }
+
+    .revelacao-wrap.screen.screen--ativa {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: auto;
+    }
+
+    .revelacao-animal {
+      font-size: 64px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .revelacao-empresa-nome {
+      color: var(--azul);
+      font-size: clamp(30px, 4.5vw, 48px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+    }
+
+    .revelacao-slogan {
+      margin-top: 12px;
+      color: var(--texto);
+      font-size: clamp(16px, 1.6vw, 20px);
+      font-weight: 700;
+      font-style: italic;
+      max-width: 600px;
+    }
+
+    .revelacao-setor-tag {
+      margin-top: 18px;
+      display: inline-block;
+      background: var(--azul-nevoa);
+      color: var(--azul);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      padding: 7px 14px;
+      border-radius: 999px;
+    }
+
+    .revelacao-ramo-tag {
+      margin-top: 8px;
+      display: block;
+      color: var(--texto-suave);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .revelacao-missao {
+      margin-top: 18px;
+      color: var(--texto);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 620px;
+      font-style: italic;
+    }
+
+    .revelacao-ficha {
+      margin-top: 24px;
+      width: 100%;
+      max-width: 520px;
+      border-top: 1px dashed var(--borda);
+      border-bottom: 1px dashed var(--borda);
+      padding: 18px 2px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .revelacao-ficha-linha {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .revelacao-ficha-rotulo {
+      color: var(--texto-suave);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .revelacao-ficha-valor {
+      color: var(--azul);
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .revelacao-dna-titulo {
+      margin-top: 26px;
+      width: 100%;
+      max-width: 520px;
+      text-align: left;
+      color: var(--azul);
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .revelacao-dna-lista {
+      margin-top: 12px;
+      width: 100%;
+      max-width: 520px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .revelacao-dna-linha {
+      display: grid;
+      grid-template-columns: 100px 1fr 38px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .revelacao-dna-nome {
+      color: var(--texto);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .revelacao-dna-track {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--azul-nevoa);
+      overflow: hidden;
+    }
+
+    .revelacao-dna-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--azul);
+      transition: width .6s ease;
+    }
+
+    .revelacao-dna-pct {
+      color: var(--texto-suave);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .revelacao-perfil-titulo {
+      margin-top: 24px;
+      color: var(--azul);
+      font-weight: 800;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .revelacao-dna {
+      margin-top: 10px;
+      color: var(--texto-suave);
+      font-size: 15px;
+      line-height: 1.65;
+      max-width: 600px;
+    }
+
+    .revelacao-acoes {
+      margin-top: 30px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .revelacao-cartao-cta {
+      margin-top: 30px;
+      width: 100%;
+      max-width: 420px;
+      background: var(--azul-nevoa);
+      border: 1.5px dashed var(--azul-claro);
+      border-radius: 22px;
+      padding: 22px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .revelacao-cartao-titulo {
+      color: var(--azul);
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .revelacao-cartao-texto {
+      margin-top: 4px;
+      color: var(--texto-suave);
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 320px;
+    }
+
+    .revelacao-cartao-qr-caixa {
+      margin-top: 16px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 8px 20px rgba(14, 56, 128, 0.12);
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .revelacao-cartao-qr-caixa img,
+    .revelacao-cartao-qr-caixa canvas {
+      display: block;
+      width: 168px;
+      height: 168px;
+    }
+
+    .revelacao-cartao-fallback {
+      margin-top: 6px;
+      color: var(--azul);
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: underline;
+    }
+
+    .revelacao-cartao-privacidade {
+      margin-top: 12px;
+      color: var(--texto-suave);
+      font-size: 11px;
+      opacity: 0.85;
+    }
+
+    @media (max-width: 900px) {
+      .pagina {
+        padding: 18px 18px 14px;
+      }
+
+      .topo {
+        align-items: flex-start;
+      }
+
+      .marca {
+        gap: 8px;
+      }
+
+      .logo-faculdade {
+        width: 48px;
+        height: 48px;
+      }
+
+      .logo-administracao {
+        height: 46px;
+      }
+
+      .marca-titulo {
+        font-size: 15px;
+      }
+
+      .marca-subtitulo {
+        font-size: 11px;
+      }
+
+      .palco {
+        padding: 24px 0;
+      }
+
+      .hero-card {
+        border-radius: 28px;
+        padding: 30px 22px 34px;
+      }
+
+      .hero-card.screen.screen--ativa.hero-card--duas-colunas {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 14px;
+      }
+
+      .hero-visual::before {
+        width: 260px;
+      }
+
+      .icone-hero {
+        width: 230px;
+        min-width: 0;
+      }
+
+      .hero-texto {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1 {
+        font-size: clamp(36px, 8.8vw, 54px);
+      }
+
+      .pergunta,
+      .descricao {
+        max-width: 620px;
+      }
+
+      .cta-area {
+        align-items: center;
+        width: 100%;
+      }
+
+      .rodape {
+        padding-top: 0;
+      }
+
+      .cadastro-card.screen.screen--ativa { grid-template-columns: 1fr; }
+      .cadastro-info { min-height: auto; }
+      .cadastro-info-rodape { display: none; }
+      .logo-admin-cadastro { max-width: 210px; margin-bottom: 20px; }
+      .cadastro-beneficios { grid-template-columns: repeat(3, 1fr); }
+
+      /* Campos com pelo menos 16px evitam o zoom automático do Safari/iOS
+         ao tocar em um input — muito comum em formulários mobile. */
+      .campo input,
+      .campo select {
+        font-size: 16px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topo {
+        gap: 12px;
+      }
+
+      .marca-texto {
+        display: none;
+      }
+
+      .logo-administracao {
+        height: 36px;
+      }
+
+      .hero-card {
+        padding: 26px 18px 30px;
+      }
+
+      .icone-hero {
+        width: 185px;
+      }
+
+      .hero-visual::before {
+        width: 210px;
+      }
+
+      .selo-topo {
+        font-size: 10px;
+      }
+
+      h1 {
+        font-size: 38px;
+      }
+
+      .pergunta {
+        font-size: 18px;
+      }
+
+      .descricao {
+        font-size: 15px;
+      }
+
+      .btn-touque {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .microinfos {
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      .cadastro-card { border-radius: 24px; }
+      .cadastro-info { padding: 28px 24px; }
+      .cadastro-info h2 { font-size: 34px; }
+      .cadastro-beneficios { grid-template-columns: 1fr; gap: 8px; }
+      .cadastro-form-area { padding: 28px 22px 30px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .campo--inteiro { grid-column: auto; }
+      .sexo-opcoes { grid-template-columns: repeat(2, 1fr); }
+      .acoes-cadastro { flex-direction: column-reverse; align-items: stretch; }
+      .btn-voltar, .btn-continuar { width: 100%; }
+
+      .opcao-pergunta { padding: 15px 16px; font-size: 15px; }
+      .revelacao-wrap { padding: 26px 18px 30px; border-radius: 26px; }
+      .revelacao-animal { font-size: 52px; }
+      .revelacao-acoes { flex-direction: column; width: 100%; }
+      .revelacao-acoes .btn-touque { width: 100%; }
+      .revelacao-cartao-cta { padding: 18px 14px 20px; max-width: 100%; }
+      .revelacao-ficha-linha { font-size: 12px; }
+      .revelacao-dna-linha { grid-template-columns: 82px 1fr 34px; }
+      .revelacao-dna-nome { font-size: 11px; }
+    }
+
+    /* Celulares bem estreitos (a maioria dos smartphones em pé) */
+    @media (max-width: 420px) {
+      .pagina {
+        padding: 14px 12px 10px;
+      }
+
+      .hero-card {
+        padding: 22px 14px 26px;
+        border-radius: 20px;
+      }
+
+      .icone-hero {
+        width: min(58vw, 205px);
+      }
+
+      .hero-visual::before {
+        width: min(62vw, 195px);
+      }
+
+      h1 {
+        font-size: clamp(28px, 9.5vw, 38px);
+      }
+
+      .pergunta {
+        font-size: 16px;
+      }
+
+      .descricao {
+        font-size: 14px;
+      }
+
+      .cadastro-form-area {
+        padding: 24px 16px 26px;
+      }
+
+      .cadastro-info {
+        padding: 24px 18px;
+      }
+
+      .cadastro-info h2 {
+        font-size: 28px;
+      }
+
+      .sexo-opcoes {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .cadastro-ok-wrap {
+        padding: 26px 18px;
+      }
+    }
+
+    @media (max-height: 760px) and (min-width: 901px) {
+      .pagina {
+        padding-top: 16px;
+        padding-bottom: 12px;
+      }
+
+      .logo-faculdade {
+        width: 48px;
+        height: 48px;
+      }
+
+      .logo-administracao {
+        height: 46px;
+      }
+
+      .palco {
+        padding: 18px 0;
+      }
+
+      .hero-card {
+        min-height: 390px;
+        padding-top: 34px;
+        padding-bottom: 34px;
+      }
+
+      .icone-hero {
+        width: min(22vw, 250px);
+        min-width: 190px;
+      }
+
+      h1 {
+        font-size: clamp(36px, 3.8vw, 56px);
+      }
+
+      .pergunta {
+        margin-top: 16px;
+      }
+
+      .cta-area {
+        margin-top: 20px;
+      }
+
+      .btn-touque {
+        min-height: 56px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+    #btn-foto-aparelho[hidden] { display: none !important; }
+  </style>
+</head>
+
+<body>
+  <main class="pagina">
+    <header class="topo">
+      <div class="marca">
+        <img src="./logo-faculdade.png" class="logo-faculdade" alt="Logo ISECENSA">
+        <div class="marca-texto">
+          <div class="marca-titulo">ISECENSA</div>
+        </div>
+      </div>
+
+      <div class="marca marca--direita">
+        <img src="./logo-administracao.png" class="logo-administracao" alt="ISECENSA Administração">
+      </div>
+    </header>
+
+    <div class="palco">
+
+      <!-- ================= TELA 1: BOAS-VINDAS ================= -->
+      <section class="hero-card screen screen--ativa hero-card--duas-colunas" id="tela-boas-vindas" aria-labelledby="titulo-principal">
+        <div class="hero-visual" aria-hidden="true">
+          <img src="./icone-hero.png" class="icone-hero" alt="">
+        </div>
+
+        <div class="hero-texto">
+          <div class="selo-topo">
+            <span class="ponto"></span>
+            Experiência interativa • 1 minuto
+          </div>
+
+          <h1 id="titulo-principal">Crie sua empresa em 1 minuto</h1>
+
+          <p class="pergunta">
+            Se você abrisse uma empresa hoje, que tipo de empreendedor seria?
+          </p>
+
+          <p class="descricao">
+            Responda <strong>5 perguntas rápidas</strong>, descubra seu perfil e veja qual empresa combina com você.
+            No final, receba seu <strong>Selo de Futuro Administrador</strong>, formado pelo ISECENSA.
+          </p>
+
+          <div class="cta-area">
+            <button class="btn-touque" id="btn-comecar" type="button">
+              👉 Toque para começar
+            </button>
+
+            <div class="microinfos" aria-label="Informações da experiência">
+              <span>5 perguntas</span>
+              <span>1 minuto</span>
+              <span>resultado instantâneo</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TELA 2: CADASTRO DO ALUNO ================= -->
+      <section class="cadastro-card screen" id="tela-cadastro" aria-labelledby="titulo-cadastro">
+        <aside class="cadastro-info">
+          <div class="cadastro-info-conteudo">
+            <img src="./logo-administracao.png" class="logo-admin-cadastro" alt="ISECENSA Administração" onerror="this.style.display='none'">
+            <div class="etapa-tag">Etapa 1 de 3</div>
+            <h2 id="titulo-cadastro">Antes de começar, conte um pouco sobre você.</h2>
+            <p>É rapidinho: só precisamos do seu nome para montar o resultado e o seu card.</p>
+
+            <div class="cadastro-beneficios">
+              <div class="cadastro-beneficio"><span>✓</span><span><strong>Só o seu nome</strong> antes das 5 perguntas</span></div>
+              <div class="cadastro-beneficio"><span>✓</span><span>Resultado personalizado da sua empresa</span></div>
+              <div class="cadastro-beneficio"><span>✓</span><span>Seu DNA de Futuro Administrador</span></div>
+            </div>
+          </div>
+
+          <div class="cadastro-info-rodape">
+            Nada é salvo: seu nome e suas respostas não são guardados nem enviados para lugar nenhum e somem quando a experiência termina.
+          </div>
+        </aside>
+
+        <div class="cadastro-form-area">
+          <div class="cadastro-form-topo">
+            <h3>Seu nome</h3>
+            <p>Digite seu nome para continuar.</p>
+            <div class="barra-etapas" aria-label="Progresso da experiência">
+              <span class="ativa"></span><span></span><span></span>
+            </div>
+          </div>
+
+          <form id="form-cadastro" novalidate>
+            <div class="form-grid">
+              <div class="campo campo--inteiro">
+                <label for="nome">Nome completo <span class="obrigatorio">*</span></label>
+                <input id="nome" name="nome" type="text" autocomplete="off" placeholder="Digite seu nome completo" required minlength="3">
+              </div>
+
+            </div>
+
+
+            <div id="erro-cadastro" class="erro-form" role="alert"></div>
+
+            <div class="acoes-cadastro">
+              <button class="btn-voltar" id="btn-voltar-inicio" type="button">← Voltar</button>
+              <button class="btn-continuar" type="submit">Continuar para as 5 perguntas <span>→</span></button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="cadastro-ok-wrap screen" id="tela-cadastro-ok">
+        <div class="check-grande">✓</div>
+        <h2>Tudo pronto!</h2>
+        <p id="mensagem-cadastro-ok">Agora vamos descobrir que empresa combina com você.</p>
+        <button class="btn-touque" id="btn-ir-perguntas" type="button">🚀 Começar as 5 perguntas</button>
+      </section>
+
+      <!-- ================= TELA: AS 5 PERGUNTAS (conteúdo trocado via JS) ================= -->
+      <section class="hero-card screen hero-card--coluna" id="tela-pergunta" aria-labelledby="pergunta-titulo">
+        <div class="pergunta-topo-acoes">
+          <button class="btn-pergunta-voltar" id="btn-pergunta-voltar" type="button">← Voltar</button>
+        </div>
+        <div class="pergunta-cabecalho">
+          <div class="pergunta-contador" id="pergunta-contador">Pergunta 1 de 5</div>
+          <div class="progresso-track"><div class="progresso-fill" id="progresso-fill" style="width:0%"></div></div>
+          <h2 class="pergunta-titulo" id="pergunta-titulo"></h2>
+        </div>
+        <div class="opcoes-pergunta" id="opcoes-pergunta"></div>
+      </section>
+
+      <!-- ================= TELA: PROCESSANDO ================= -->
+      <section class="cadastro-ok-wrap screen" id="tela-processando">
+        <div class="spinner-processando" aria-hidden="true"></div>
+        <h2>Calculando seu perfil...</h2>
+        <p>Estamos descobrindo qual empresa combina com você.</p>
+      </section>
+
+      <!-- ================= TELA: REVELAÇÃO DA EMPRESA ================= -->
+      <section class="revelacao-wrap screen" id="tela-revelacao" aria-labelledby="revelacao-nome">
+        <div class="selo-topo">
+          <span class="ponto"></span>
+          Selo de Futuro Administrador
+        </div>
+        <div class="revelacao-animal" id="revelacao-animal" aria-hidden="true"></div>
+        <h1 class="revelacao-empresa-nome" id="revelacao-nome"></h1>
+        <p class="revelacao-slogan" id="revelacao-slogan"></p>
+        <span class="revelacao-setor-tag" id="revelacao-setor"></span>
+        <span class="revelacao-ramo-tag" id="revelacao-ramo"></span>
+        <div class="revelacao-perfil-titulo" id="revelacao-perfil-titulo"></div>
+        <p class="revelacao-dna" id="revelacao-dna"></p>
+        <p class="revelacao-missao" id="revelacao-missao"></p>
+
+        <div class="revelacao-ficha">
+          <div class="revelacao-ficha-linha">
+            <span class="revelacao-ficha-rotulo">Fundador(a)</span>
+            <span class="revelacao-ficha-valor" id="revelacao-fundador"></span>
+          </div>
+          <div class="revelacao-ficha-linha">
+            <span class="revelacao-ficha-rotulo">Cargo</span>
+            <span class="revelacao-ficha-valor" id="revelacao-cargo"></span>
+          </div>
+          <div class="revelacao-ficha-linha">
+            <span class="revelacao-ficha-rotulo">Fundada em</span>
+            <span class="revelacao-ficha-valor" id="revelacao-data"></span>
+          </div>
+          <div class="revelacao-ficha-linha">
+            <span class="revelacao-ficha-rotulo">Registro fictício</span>
+            <span class="revelacao-ficha-valor" id="revelacao-registro"></span>
+          </div>
+        </div>
+
+
+        <div class="revelacao-cartao-cta">
+          <div class="revelacao-cartao-titulo">📸 Tire sua foto e gere seu card</div>
+          <p class="revelacao-cartao-texto">Tire sua foto neste aparelho ou escaneie o QR code para continuar no seu celular. Seu card fica pronto para baixar e compartilhar.</p>
+          <a class="btn-touque" id="btn-foto-aparelho" hidden style="margin:16px 0;text-decoration:none;">📷 Tirar foto neste aparelho</a>
+          <div class="revelacao-cartao-qr-caixa" id="qr-cartao"></div>
+          <a class="revelacao-cartao-fallback" id="link-cartao-manual" style="display:none;" target="_blank" rel="noopener">Abrir no celular</a>
+          <p class="revelacao-cartao-privacidade">Sua foto é processada apenas no aparelho utilizado e não é enviada a nenhum servidor.</p>
+        </div>
+
+        <div class="revelacao-acoes">
+          <button class="btn-touque btn-touque--secundario" id="btn-refazer" type="button">↺ Refazer a experiência</button>
+        </div>
+      </section>
+    </div>
+
+    <footer class="rodape">
+      Uma experiência do <strong>Curso de Administração</strong> — ISECENSA
+    </footer>
+  </main>
+
+  <div class="overlay-inatividade" id="overlay-inatividade" role="alertdialog" aria-live="assertive" aria-label="Aviso de inatividade">
+    <div class="overlay-inatividade-caixa">
+      <div class="overlay-inatividade-emoji" aria-hidden="true">⏳</div>
+      <h2>Ainda está aí?</h2>
+      <p class="overlay-inatividade-texto">Por inatividade, vamos voltar para o início em</p>
+      <div class="overlay-inatividade-numero" id="overlay-inatividade-numero">15</div>
+      <button class="btn-touque" id="btn-continuar-usando" type="button">Continuar usando</button>
+    </div>
+  </div>
+
+  <div class="aviso" id="aviso"></div>
+
+  <!-- Gera o QR code do card compartilhável na tela de revelação -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script>
+    // ---------- Sem banco de dados e sem armazenamento ----------
+    // Esta versão NÃO grava nada: nenhum envio a banco de dados, nada em
+    // localStorage/sessionStorage. O nome e o resultado do aluno ficam só
+    // na memória da página enquanto ela está aberta e somem ao reiniciar.
+    //
+    // Limpeza única: apaga o que versões anteriores do site possam ter
+    // deixado guardado neste navegador (fila de reenvio e dados da sessão).
+    try { localStorage.removeItem('ise_fila_pendente'); } catch (erro) {}
+    try {
+      ['ise_aluno', 'ise_resultado', 'ise_sessao_id'].forEach(function (k) { sessionStorage.removeItem(k); });
+    } catch (erro) {}
+
+    // Dados do aluno atual — só em memória.
+    let alunoAtual = null;
+
+    // Troca qual .screen fica visível dentro de .palco — usada em toda
+    // a experiência (cadastro, 5 perguntas, processando, revelação).
+    function mostrarTela(id) {
+      document.querySelectorAll('.screen').forEach(function (el) {
+        el.classList.remove('screen--ativa');
+      });
+      document.getElementById(id).classList.add('screen--ativa');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Toda troca de tela reagenda o relógio de inatividade (definida mais
+      // abaixo) — cobre tanto cliques em botões quanto transições automáticas.
+      if (typeof agendarAvisoInatividade === 'function') { agendarAvisoInatividade(); }
+    }
+
+    const aviso = document.getElementById('aviso');
+    let timerAviso;
+    function mostrarAviso(texto) {
+      aviso.textContent = texto;
+      aviso.classList.add('visivel');
+      clearTimeout(timerAviso);
+      timerAviso = setTimeout(function () {
+        aviso.classList.remove('visivel');
+      }, 3200);
+    }
+
+    // ---------- Tela 1 → Tela 2 (cadastro) ----------
+    document.getElementById('btn-comecar').addEventListener('click', function () {
+      mostrarTela('tela-cadastro');
+      setTimeout(function () { document.getElementById('nome').focus(); }, 250);
+    });
+
+    document.getElementById('btn-voltar-inicio').addEventListener('click', function () {
+      mostrarTela('tela-boas-vindas');
+    });
+
+
+    // ---------- Tela 2 (cadastro) → Tela 3 (confirmação) ----------
+    const formCadastro = document.getElementById('form-cadastro');
+    const erroCadastro = document.getElementById('erro-cadastro');
+
+    formCadastro.addEventListener('submit', function (event) {
+      event.preventDefault();
+      erroCadastro.classList.remove('visivel');
+      erroCadastro.textContent = '';
+
+      if (!formCadastro.checkValidity()) {
+        erroCadastro.textContent = 'Digite seu nome para continuar.';
+        erroCadastro.classList.add('visivel');
+        formCadastro.reportValidity();
+        return;
+      }
+
+      // Nome só em memória — nada é gravado.
+      alunoAtual = { nome: document.getElementById('nome').value.trim() };
+      const dados = alunoAtual;
+
+      const primeiroNome = dados.nome.trim().split(/\s+/)[0];
+      document.getElementById('mensagem-cadastro-ok').textContent =
+        'Tudo certo, ' + primeiroNome + '! Agora vamos descobrir que empresa combina com você.';
+
+      mostrarTela('tela-cadastro-ok');
+    });
+
+    // ---------- Bloco 3: as 5 perguntas + geração da empresa ----------
+
+    // Cada "perfil" é um dos 5 arquétipos de administrador. As perguntas 2,
+    // 4 e 5 votam nesses perfis (eixo: 'perfil'); a pergunta 1 define o
+    // setor e a 3 define o estilo de decisão — esses dois não entram na
+    // pontuação, só no texto final.
+    const PERFIS = {
+      mkt: {
+        nome: 'Comunicador(a) Nato(a)', curto: 'Marketing', animal: 'Golfinho', emoji: '🐬',
+        frase: 'Seu superpoder é comunicar. Você sabe transformar uma ideia em algo que todo mundo quer ouvir — e ouvir de novo.',
+        slogan: 'Toda marca tem uma voz. A da {nome} é impossível ignorar.'
+      },
+      ops: {
+        nome: 'Organizador(a) Mestre', curto: 'Operações', animal: 'Formiga', emoji: '🐜',
+        frase: 'Seu superpoder é organizar. Onde tem bagunça, você enxerga um sistema esperando para ser montado.',
+        slogan: 'Onde existe caos, a {nome} encontra ordem e eficiência.'
+      },
+      fin: {
+        nome: 'Estrategista Financeiro(a)', curto: 'Finanças', animal: 'Coruja', emoji: '🦉',
+        frase: 'Seu superpoder é decidir com a cabeça fria. Você sabe que todo sonho grande precisa de uma base financeira sólida.',
+        slogan: 'Crescer com segurança: esse é o compromisso da {nome}.'
+      },
+      lid: {
+        nome: 'Líder Nato(a)', curto: 'Liderança', animal: 'Leão', emoji: '🦁',
+        frase: 'Seu superpoder é inspirar pessoas. Times inteiros rendem mais quando você está por perto.',
+        slogan: 'Por trás de toda grande equipe, tem alguém como a {nome} liderando.'
+      },
+      est: {
+        nome: 'Visionário(a) Estratégico(a)', curto: 'Estratégia', animal: 'Raposa', emoji: '🦊',
+        frase: 'Seu superpoder é enxergar longe. Enquanto os outros reagem ao presente, você já está pensando no que vem depois.',
+        slogan: 'A {nome} não segue tendências. Ela enxerga o próximo passo antes de todo mundo.'
+      }
+    };
+
+    const RAMOS = {
+      tecnologia: ['Startup de aplicativos', 'Desenvolvedora de software', 'Empresa de inteligência artificial', 'Estúdio de games', 'Consultoria em tecnologia', 'Plataforma de e-commerce'],
+      saude: ['Clínica de bem-estar', 'Academia e estúdio fitness', 'Marca de suplementos naturais', 'Consultório de nutrição', 'Spa e terapias holísticas', 'Startup de telemedicina'],
+      alimentacao: ['Hamburgueria artesanal', 'Confeitaria e doceria', 'Food truck gourmet', 'Marca de produtos naturais', 'Restaurante temático', 'Delivery de refeições saudáveis'],
+      moda: ['Loja de roupas autorais', 'Marca de cosméticos', 'Ateliê de acessórios', 'Grife de streetwear', 'Salão de beleza e estética', 'Marca de calçados'],
+      sustentabilidade: ['Empresa de reciclagem', 'Marca de produtos biodegradáveis', 'Consultoria em energia solar', 'Horta urbana e agricultura sustentável', 'Startup de economia circular', 'Marca de moda sustentável']
+    };
+
+    // 150 missões completas: uma por ramo e perfil.
+    // Critérios: entrega, necessidade, abrangência, forma de atuação e beneficiários.
+    const MISSOES = {
+  "tecnologia": {
+    "Startup de aplicativos": {
+      "mkt": "Desenvolver aplicativos úteis em todo o Brasil, com escuta dos usuários e comunicação clara, para simplificar tarefas do dia a dia e dar mais praticidade e autonomia às pessoas.",
+      "ops": "Desenvolver aplicativos úteis em todo o Brasil, com interfaces simples e funcionamento confiável, para simplificar tarefas do dia a dia e dar mais praticidade e autonomia às pessoas.",
+      "fin": "Desenvolver aplicativos úteis em todo o Brasil, com uso responsável de recursos e opções acessíveis, para simplificar tarefas do dia a dia e dar mais praticidade e autonomia às pessoas.",
+      "lid": "Desenvolver aplicativos úteis em todo o Brasil, com equipes colaborativas e atentas aos usuários, para simplificar tarefas do dia a dia e dar mais praticidade e autonomia às pessoas.",
+      "est": "Desenvolver aplicativos úteis em todo o Brasil, com soluções criativas para necessidades emergentes, para simplificar tarefas do dia a dia e dar mais praticidade e autonomia às pessoas."
+    },
+    "Desenvolvedora de software": {
+      "mkt": "Desenvolver softwares de gestão em todo o Brasil, com diálogo próximo e suporte claro, para reduzir tarefas repetitivas e ajudar pequenas empresas a organizar o trabalho.",
+      "ops": "Desenvolver softwares de gestão em todo o Brasil, com processos bem estruturados e sistemas confiáveis, para reduzir tarefas repetitivas e ajudar pequenas empresas a organizar o trabalho.",
+      "fin": "Desenvolver softwares de gestão em todo o Brasil, com soluções de bom custo-benefício e custos transparentes, para reduzir tarefas repetitivas e ajudar pequenas empresas a organizar o trabalho.",
+      "lid": "Desenvolver softwares de gestão em todo o Brasil, com equipes capacitadas e suporte acolhedor, para reduzir tarefas repetitivas e ajudar pequenas empresas a organizar o trabalho.",
+      "est": "Desenvolver softwares de gestão em todo o Brasil, com soluções flexíveis que acompanhem novos desafios, para reduzir tarefas repetitivas e ajudar pequenas empresas a organizar o trabalho."
+    },
+    "Empresa de inteligência artificial": {
+      "mkt": "Criar soluções de inteligência artificial em todo o Brasil, com escuta dos clientes e explicações acessíveis, para facilitar a análise de informações e ajudar empresas a tomar decisões mais bem informadas.",
+      "ops": "Criar soluções de inteligência artificial em todo o Brasil, com testes rigorosos e atenção à qualidade dos dados, para facilitar a análise de informações e ajudar empresas a tomar decisões mais bem informadas.",
+      "fin": "Criar soluções de inteligência artificial em todo o Brasil, com projetos economicamente viáveis e uso eficiente de recursos, para facilitar a análise de informações e ajudar empresas a tomar decisões mais bem informadas.",
+      "lid": "Criar soluções de inteligência artificial em todo o Brasil, com equipes multidisciplinares e formação contínua, para facilitar a análise de informações e ajudar empresas a tomar decisões mais bem informadas.",
+      "est": "Criar soluções de inteligência artificial em todo o Brasil, com pesquisa aplicada e inovação responsável, para facilitar a análise de informações e ajudar empresas a tomar decisões mais bem informadas."
+    },
+    "Estúdio de games": {
+      "mkt": "Desenvolver jogos digitais em todo o Brasil, com diálogo com a comunidade e histórias envolventes, para ampliar as opções de lazer interativo e proporcionar diversão e conexão entre jogadores.",
+      "ops": "Desenvolver jogos digitais em todo o Brasil, com testes de qualidade e experiências fluidas, para ampliar as opções de lazer interativo e proporcionar diversão e conexão entre jogadores.",
+      "fin": "Desenvolver jogos digitais em todo o Brasil, com planejamento de custos e preços transparentes, para ampliar as opções de lazer interativo e proporcionar diversão e conexão entre jogadores.",
+      "lid": "Desenvolver jogos digitais em todo o Brasil, com equipes criativas e respeito à diversidade, para ampliar as opções de lazer interativo e proporcionar diversão e conexão entre jogadores.",
+      "est": "Desenvolver jogos digitais em todo o Brasil, com novas formas de jogar e explorar histórias, para ampliar as opções de lazer interativo e proporcionar diversão e conexão entre jogadores."
+    },
+    "Consultoria em tecnologia": {
+      "mkt": "Prestar consultoria em tecnologia em todo o Brasil, com diagnóstico próximo e orientação clara, para superar dificuldades no uso de ferramentas digitais e ajudar pequenos negócios a trabalhar melhor.",
+      "ops": "Prestar consultoria em tecnologia em todo o Brasil, com implantação organizada e acompanhamento técnico, para superar dificuldades no uso de ferramentas digitais e ajudar pequenos negócios a trabalhar melhor.",
+      "fin": "Prestar consultoria em tecnologia em todo o Brasil, com escolhas compatíveis com o orçamento de cada cliente, para superar dificuldades no uso de ferramentas digitais e ajudar pequenos negócios a trabalhar melhor.",
+      "lid": "Prestar consultoria em tecnologia em todo o Brasil, com profissionais capacitados e troca de conhecimento, para superar dificuldades no uso de ferramentas digitais e ajudar pequenos negócios a trabalhar melhor.",
+      "est": "Prestar consultoria em tecnologia em todo o Brasil, com soluções alinhadas aos desafios futuros dos clientes, para superar dificuldades no uso de ferramentas digitais e ajudar pequenos negócios a trabalhar melhor."
+    },
+    "Plataforma de e-commerce": {
+      "mkt": "Oferecer uma plataforma de comércio eletrônico em todo o Brasil, com comunicação clara e atenção à experiência de compra, para facilitar as vendas pela internet e aproximar pequenos vendedores e consumidores.",
+      "ops": "Oferecer uma plataforma de comércio eletrônico em todo o Brasil, com navegação simples e pedidos bem organizados, para facilitar as vendas pela internet e aproximar pequenos vendedores e consumidores.",
+      "fin": "Oferecer uma plataforma de comércio eletrônico em todo o Brasil, com tarifas transparentes e opções viáveis para pequenos negócios, para facilitar as vendas pela internet e aproximar pequenos vendedores e consumidores.",
+      "lid": "Oferecer uma plataforma de comércio eletrônico em todo o Brasil, com equipes preparadas para apoiar vendedores e compradores, para facilitar as vendas pela internet e aproximar pequenos vendedores e consumidores.",
+      "est": "Oferecer uma plataforma de comércio eletrônico em todo o Brasil, com recursos inovadores que acompanhem novos hábitos de consumo, para facilitar as vendas pela internet e aproximar pequenos vendedores e consumidores."
+    }
+  },
+  "saude": {
+    "Clínica de bem-estar": {
+      "mkt": "Oferecer serviços de cuidado e bem-estar em Campos dos Goytacazes e região, com escuta atenta e orientação clara, para acolher diferentes necessidades de autocuidado e contribuir para a qualidade de vida das pessoas.",
+      "ops": "Oferecer serviços de cuidado e bem-estar em Campos dos Goytacazes e região, com atendimento organizado e cuidado individualizado, para acolher diferentes necessidades de autocuidado e contribuir para a qualidade de vida das pessoas.",
+      "fin": "Oferecer serviços de cuidado e bem-estar em Campos dos Goytacazes e região, com gestão responsável e preços transparentes, para acolher diferentes necessidades de autocuidado e contribuir para a qualidade de vida das pessoas.",
+      "lid": "Oferecer serviços de cuidado e bem-estar em Campos dos Goytacazes e região, com profissionais qualificados e acolhimento humanizado, para acolher diferentes necessidades de autocuidado e contribuir para a qualidade de vida das pessoas.",
+      "est": "Oferecer serviços de cuidado e bem-estar em Campos dos Goytacazes e região, com práticas atualizadas e atenção às novas demandas, para acolher diferentes necessidades de autocuidado e contribuir para a qualidade de vida das pessoas."
+    },
+    "Academia e estúdio fitness": {
+      "mkt": "Oferecer atividades físicas orientadas em Campos dos Goytacazes e região, com incentivo próximo e comunicação motivadora, para facilitar a prática regular de exercícios e apoiar a saúde e a disposição de pessoas com diferentes rotinas.",
+      "ops": "Oferecer atividades físicas orientadas em Campos dos Goytacazes e região, com treinos organizados e acompanhamento cuidadoso, para facilitar a prática regular de exercícios e apoiar a saúde e a disposição de pessoas com diferentes rotinas.",
+      "fin": "Oferecer atividades físicas orientadas em Campos dos Goytacazes e região, com planos acessíveis e uso responsável de recursos, para facilitar a prática regular de exercícios e apoiar a saúde e a disposição de pessoas com diferentes rotinas.",
+      "lid": "Oferecer atividades físicas orientadas em Campos dos Goytacazes e região, com instrutores capacitados e um ambiente acolhedor, para facilitar a prática regular de exercícios e apoiar a saúde e a disposição de pessoas com diferentes rotinas.",
+      "est": "Oferecer atividades físicas orientadas em Campos dos Goytacazes e região, com modalidades variadas e soluções para novos hábitos, para facilitar a prática regular de exercícios e apoiar a saúde e a disposição de pessoas com diferentes rotinas."
+    },
+    "Marca de suplementos naturais": {
+      "mkt": "Produzir suplementos naturais em todo o Brasil, com informações claras sobre composição e uso, para oferecer opções de complementação alimentar e apoiar escolhas conscientes de adultos interessados em nutrição.",
+      "ops": "Produzir suplementos naturais em todo o Brasil, com controle de qualidade e rastreabilidade dos ingredientes, para oferecer opções de complementação alimentar e apoiar escolhas conscientes de adultos interessados em nutrição.",
+      "fin": "Produzir suplementos naturais em todo o Brasil, com preços transparentes e gestão eficiente da produção, para oferecer opções de complementação alimentar e apoiar escolhas conscientes de adultos interessados em nutrição.",
+      "lid": "Produzir suplementos naturais em todo o Brasil, com equipes qualificadas e orientação responsável, para oferecer opções de complementação alimentar e apoiar escolhas conscientes de adultos interessados em nutrição.",
+      "est": "Produzir suplementos naturais em todo o Brasil, com desenvolvimento criterioso de novas formulações, para oferecer opções de complementação alimentar e apoiar escolhas conscientes de adultos interessados em nutrição."
+    },
+    "Consultório de nutrição": {
+      "mkt": "Oferecer acompanhamento nutricional em Campos dos Goytacazes e região, com escuta próxima e orientações fáceis de compreender, para ajudar a enfrentar dificuldades na alimentação e apoiar hábitos saudáveis de pessoas com diferentes necessidades.",
+      "ops": "Oferecer acompanhamento nutricional em Campos dos Goytacazes e região, com avaliação individual e acompanhamento organizado, para ajudar a enfrentar dificuldades na alimentação e apoiar hábitos saudáveis de pessoas com diferentes necessidades.",
+      "fin": "Oferecer acompanhamento nutricional em Campos dos Goytacazes e região, com orientações compatíveis com o orçamento de cada pessoa, para ajudar a enfrentar dificuldades na alimentação e apoiar hábitos saudáveis de pessoas com diferentes necessidades.",
+      "lid": "Oferecer acompanhamento nutricional em Campos dos Goytacazes e região, com atendimento acolhedor e atualização profissional, para ajudar a enfrentar dificuldades na alimentação e apoiar hábitos saudáveis de pessoas com diferentes necessidades.",
+      "est": "Oferecer acompanhamento nutricional em Campos dos Goytacazes e região, com estratégias personalizadas que acompanhem mudanças de rotina, para ajudar a enfrentar dificuldades na alimentação e apoiar hábitos saudáveis de pessoas com diferentes necessidades."
+    },
+    "Spa e terapias holísticas": {
+      "mkt": "Oferecer experiências de relaxamento e autocuidado em Campos dos Goytacazes e região, com escuta das preferências e comunicação acolhedora, para criar momentos de pausa na rotina e promover conforto e bem-estar para adultos.",
+      "ops": "Oferecer experiências de relaxamento e autocuidado em Campos dos Goytacazes e região, com ambientes cuidados e atendimentos bem organizados, para criar momentos de pausa na rotina e promover conforto e bem-estar para adultos.",
+      "fin": "Oferecer experiências de relaxamento e autocuidado em Campos dos Goytacazes e região, com serviços de preços claros e gestão responsável, para criar momentos de pausa na rotina e promover conforto e bem-estar para adultos.",
+      "lid": "Oferecer experiências de relaxamento e autocuidado em Campos dos Goytacazes e região, com equipes preparadas e respeito às necessidades individuais, para criar momentos de pausa na rotina e promover conforto e bem-estar para adultos.",
+      "est": "Oferecer experiências de relaxamento e autocuidado em Campos dos Goytacazes e região, com experiências variadas e atenção a novos interesses, para criar momentos de pausa na rotina e promover conforto e bem-estar para adultos."
+    },
+    "Startup de telemedicina": {
+      "mkt": "Conectar pacientes a profissionais de saúde por telemedicina em todo o Brasil, com comunicação acessível e apoio ao paciente, para reduzir barreiras de deslocamento e facilitar o acesso das pessoas à orientação médica.",
+      "ops": "Conectar pacientes a profissionais de saúde por telemedicina em todo o Brasil, com agendamento organizado e proteção das informações, para reduzir barreiras de deslocamento e facilitar o acesso das pessoas à orientação médica.",
+      "fin": "Conectar pacientes a profissionais de saúde por telemedicina em todo o Brasil, com custos transparentes e uso eficiente da estrutura digital, para reduzir barreiras de deslocamento e facilitar o acesso das pessoas à orientação médica.",
+      "lid": "Conectar pacientes a profissionais de saúde por telemedicina em todo o Brasil, com profissionais qualificados e atendimento humanizado, para reduzir barreiras de deslocamento e facilitar o acesso das pessoas à orientação médica.",
+      "est": "Conectar pacientes a profissionais de saúde por telemedicina em todo o Brasil, com tecnologia inclusiva e aperfeiçoamento contínuo do acesso, para reduzir barreiras de deslocamento e facilitar o acesso das pessoas à orientação médica."
+    }
+  },
+  "alimentacao": {
+    "Hamburgueria artesanal": {
+      "mkt": "Preparar e servir hambúrgueres artesanais em Campos dos Goytacazes e região, com escuta dos clientes e apresentação convidativa, para oferecer opções saborosas para encontros e refeições e proporcionar bons momentos a clientes e seus acompanhantes.",
+      "ops": "Preparar e servir hambúrgueres artesanais em Campos dos Goytacazes e região, com ingredientes bem selecionados e preparo padronizado, para oferecer opções saborosas para encontros e refeições e proporcionar bons momentos a clientes e seus acompanhantes.",
+      "fin": "Preparar e servir hambúrgueres artesanais em Campos dos Goytacazes e região, com controle de desperdícios e preços justos, para oferecer opções saborosas para encontros e refeições e proporcionar bons momentos a clientes e seus acompanhantes.",
+      "lid": "Preparar e servir hambúrgueres artesanais em Campos dos Goytacazes e região, com uma equipe valorizada e atendimento acolhedor, para oferecer opções saborosas para encontros e refeições e proporcionar bons momentos a clientes e seus acompanhantes.",
+      "est": "Preparar e servir hambúrgueres artesanais em Campos dos Goytacazes e região, com receitas criativas e atenção a novas preferências, para oferecer opções saborosas para encontros e refeições e proporcionar bons momentos a clientes e seus acompanhantes."
+    },
+    "Confeitaria e doceria": {
+      "mkt": "Produzir bolos e doces em Campos dos Goytacazes e região, com atenção aos pedidos e apresentação cuidadosa, para tornar celebrações e pausas mais especiais e levar sabor e carinho a famílias e pessoas que celebram.",
+      "ops": "Produzir bolos e doces em Campos dos Goytacazes e região, com preparo caprichado e entregas pontuais, para tornar celebrações e pausas mais especiais e levar sabor e carinho a famílias e pessoas que celebram.",
+      "fin": "Produzir bolos e doces em Campos dos Goytacazes e região, com planejamento de ingredientes e preços transparentes, para tornar celebrações e pausas mais especiais e levar sabor e carinho a famílias e pessoas que celebram.",
+      "lid": "Produzir bolos e doces em Campos dos Goytacazes e região, com uma equipe dedicada e atendimento atencioso, para tornar celebrações e pausas mais especiais e levar sabor e carinho a famílias e pessoas que celebram.",
+      "est": "Produzir bolos e doces em Campos dos Goytacazes e região, com novas receitas e opções para diferentes ocasiões, para tornar celebrações e pausas mais especiais e levar sabor e carinho a famílias e pessoas que celebram."
+    },
+    "Food truck gourmet": {
+      "mkt": "Preparar e vender refeições em food truck em Campos dos Goytacazes e região, com divulgação clara dos pontos de atendimento e escuta dos clientes, para ampliar as opções práticas de alimentação e atender quem busca sabor em passeios, eventos e intervalos.",
+      "ops": "Preparar e vender refeições em food truck em Campos dos Goytacazes e região, com preparo organizado e serviço ágil, para ampliar as opções práticas de alimentação e atender quem busca sabor em passeios, eventos e intervalos.",
+      "fin": "Preparar e vender refeições em food truck em Campos dos Goytacazes e região, com controle de custos e redução de desperdícios, para ampliar as opções práticas de alimentação e atender quem busca sabor em passeios, eventos e intervalos.",
+      "lid": "Preparar e vender refeições em food truck em Campos dos Goytacazes e região, com uma equipe integrada e atendimento receptivo, para ampliar as opções práticas de alimentação e atender quem busca sabor em passeios, eventos e intervalos.",
+      "est": "Preparar e vender refeições em food truck em Campos dos Goytacazes e região, com cardápios criativos e presença em novos pontos de encontro, para ampliar as opções práticas de alimentação e atender quem busca sabor em passeios, eventos e intervalos."
+    },
+    "Marca de produtos naturais": {
+      "mkt": "Produzir alimentos com ingredientes naturais em todo o Brasil, com informações claras sobre os ingredientes, para ampliar as opções para uma alimentação variada e facilitar escolhas conscientes de consumidores e famílias.",
+      "ops": "Produzir alimentos com ingredientes naturais em todo o Brasil, com seleção cuidadosa de insumos e controle de qualidade, para ampliar as opções para uma alimentação variada e facilitar escolhas conscientes de consumidores e famílias.",
+      "fin": "Produzir alimentos com ingredientes naturais em todo o Brasil, com produção eficiente e preços transparentes, para ampliar as opções para uma alimentação variada e facilitar escolhas conscientes de consumidores e famílias.",
+      "lid": "Produzir alimentos com ingredientes naturais em todo o Brasil, com equipes capacitadas e fornecedores comprometidos, para ampliar as opções para uma alimentação variada e facilitar escolhas conscientes de consumidores e famílias.",
+      "est": "Produzir alimentos com ingredientes naturais em todo o Brasil, com novas receitas que atendam diferentes preferências, para ampliar as opções para uma alimentação variada e facilitar escolhas conscientes de consumidores e famílias."
+    },
+    "Restaurante temático": {
+      "mkt": "Servir refeições em um ambiente temático em Campos dos Goytacazes e região, com histórias envolventes e diálogo com os clientes, para oferecer experiências de lazer à mesa e criar momentos memoráveis para famílias e grupos de amigos.",
+      "ops": "Servir refeições em um ambiente temático em Campos dos Goytacazes e região, com qualidade no preparo e serviço bem coordenado, para oferecer experiências de lazer à mesa e criar momentos memoráveis para famílias e grupos de amigos.",
+      "fin": "Servir refeições em um ambiente temático em Campos dos Goytacazes e região, com planejamento de compras e opções de bom custo-benefício, para oferecer experiências de lazer à mesa e criar momentos memoráveis para famílias e grupos de amigos.",
+      "lid": "Servir refeições em um ambiente temático em Campos dos Goytacazes e região, com uma equipe acolhedora e integrada, para oferecer experiências de lazer à mesa e criar momentos memoráveis para famílias e grupos de amigos.",
+      "est": "Servir refeições em um ambiente temático em Campos dos Goytacazes e região, com experiências criativas que renovem o interesse dos visitantes, para oferecer experiências de lazer à mesa e criar momentos memoráveis para famílias e grupos de amigos."
+    },
+    "Delivery de refeições saudáveis": {
+      "mkt": "Preparar e entregar refeições equilibradas em Campos dos Goytacazes e região, com cardápios claros e escuta das preferências dos clientes, para facilitar a alimentação saudável na rotina e oferecer praticidade a pessoas com pouco tempo para cozinhar.",
+      "ops": "Preparar e entregar refeições equilibradas em Campos dos Goytacazes e região, com qualidade no preparo e pontualidade nas entregas, para facilitar a alimentação saudável na rotina e oferecer praticidade a pessoas com pouco tempo para cozinhar.",
+      "fin": "Preparar e entregar refeições equilibradas em Campos dos Goytacazes e região, com redução de desperdícios e planos de preços transparentes, para facilitar a alimentação saudável na rotina e oferecer praticidade a pessoas com pouco tempo para cozinhar.",
+      "lid": "Preparar e entregar refeições equilibradas em Campos dos Goytacazes e região, com uma equipe capacitada e valorizada, para facilitar a alimentação saudável na rotina e oferecer praticidade a pessoas com pouco tempo para cozinhar.",
+      "est": "Preparar e entregar refeições equilibradas em Campos dos Goytacazes e região, com cardápios variados e soluções para diferentes rotinas, para facilitar a alimentação saudável na rotina e oferecer praticidade a pessoas com pouco tempo para cozinhar."
+    }
+  },
+  "moda": {
+    "Loja de roupas autorais": {
+      "mkt": "Criar e vender roupas autorais em Campos dos Goytacazes e região, com diálogo sobre estilos e apresentação inspiradora, para ampliar as possibilidades de expressão pessoal e ajudar clientes a vestir sua identidade com conforto.",
+      "ops": "Criar e vender roupas autorais em Campos dos Goytacazes e região, com acabamento cuidadoso e organização dos pedidos, para ampliar as possibilidades de expressão pessoal e ajudar clientes a vestir sua identidade com conforto.",
+      "fin": "Criar e vender roupas autorais em Campos dos Goytacazes e região, com uso eficiente de tecidos e preços transparentes, para ampliar as possibilidades de expressão pessoal e ajudar clientes a vestir sua identidade com conforto.",
+      "lid": "Criar e vender roupas autorais em Campos dos Goytacazes e região, com valorização dos criadores e atendimento acolhedor, para ampliar as possibilidades de expressão pessoal e ajudar clientes a vestir sua identidade com conforto.",
+      "est": "Criar e vender roupas autorais em Campos dos Goytacazes e região, com coleções originais e atenção a novos comportamentos, para ampliar as possibilidades de expressão pessoal e ajudar clientes a vestir sua identidade com conforto."
+    },
+    "Marca de cosméticos": {
+      "mkt": "Desenvolver cosméticos em todo o Brasil, com informações claras e escuta dos consumidores, para atender diferentes necessidades de cuidado pessoal e apoiar o autocuidado de consumidores com diferentes perfis.",
+      "ops": "Desenvolver cosméticos em todo o Brasil, com controle de qualidade e atenção à segurança dos produtos, para atender diferentes necessidades de cuidado pessoal e apoiar o autocuidado de consumidores com diferentes perfis.",
+      "fin": "Desenvolver cosméticos em todo o Brasil, com produção eficiente e preços transparentes, para atender diferentes necessidades de cuidado pessoal e apoiar o autocuidado de consumidores com diferentes perfis.",
+      "lid": "Desenvolver cosméticos em todo o Brasil, com equipes qualificadas e respeito à diversidade, para atender diferentes necessidades de cuidado pessoal e apoiar o autocuidado de consumidores com diferentes perfis.",
+      "est": "Desenvolver cosméticos em todo o Brasil, com pesquisa e desenvolvimento de novas soluções de cuidado, para atender diferentes necessidades de cuidado pessoal e apoiar o autocuidado de consumidores com diferentes perfis."
+    },
+    "Ateliê de acessórios": {
+      "mkt": "Criar acessórios artesanais em Campos dos Goytacazes e região, com atenção às preferências e diálogo sobre cada criação, para oferecer peças que expressem diferentes estilos e valorizar a identidade de quem busca detalhes únicos.",
+      "ops": "Criar acessórios artesanais em Campos dos Goytacazes e região, com acabamento cuidadoso e cumprimento dos prazos, para oferecer peças que expressem diferentes estilos e valorizar a identidade de quem busca detalhes únicos.",
+      "fin": "Criar acessórios artesanais em Campos dos Goytacazes e região, com aproveitamento de materiais e preços justos, para oferecer peças que expressem diferentes estilos e valorizar a identidade de quem busca detalhes únicos.",
+      "lid": "Criar acessórios artesanais em Campos dos Goytacazes e região, com valorização do trabalho artesanal e atendimento próximo, para oferecer peças que expressem diferentes estilos e valorizar a identidade de quem busca detalhes únicos.",
+      "est": "Criar acessórios artesanais em Campos dos Goytacazes e região, com combinações originais de materiais e formas, para oferecer peças que expressem diferentes estilos e valorizar a identidade de quem busca detalhes únicos."
+    },
+    "Grife de streetwear": {
+      "mkt": "Criar roupas de streetwear em todo o Brasil, com diálogo com a comunidade e comunicação autêntica, para dar espaço à expressão da cultura urbana e fortalecer a identidade de jovens e comunidades criativas.",
+      "ops": "Criar roupas de streetwear em todo o Brasil, com conforto, bom acabamento e entregas organizadas, para dar espaço à expressão da cultura urbana e fortalecer a identidade de jovens e comunidades criativas.",
+      "fin": "Criar roupas de streetwear em todo o Brasil, com produção planejada e preços coerentes com a qualidade, para dar espaço à expressão da cultura urbana e fortalecer a identidade de jovens e comunidades criativas.",
+      "lid": "Criar roupas de streetwear em todo o Brasil, com colaboração entre artistas e valorização das equipes, para dar espaço à expressão da cultura urbana e fortalecer a identidade de jovens e comunidades criativas.",
+      "est": "Criar roupas de streetwear em todo o Brasil, com coleções experimentais e atenção aos movimentos culturais, para dar espaço à expressão da cultura urbana e fortalecer a identidade de jovens e comunidades criativas."
+    },
+    "Salão de beleza e estética": {
+      "mkt": "Oferecer serviços de beleza e estética em Campos dos Goytacazes e região, com escuta das preferências e orientação clara, para atender necessidades de cuidado com a aparência e promover bem-estar e expressão pessoal para os clientes.",
+      "ops": "Oferecer serviços de beleza e estética em Campos dos Goytacazes e região, com higiene, organização e cuidado em cada atendimento, para atender necessidades de cuidado com a aparência e promover bem-estar e expressão pessoal para os clientes.",
+      "fin": "Oferecer serviços de beleza e estética em Campos dos Goytacazes e região, com preços transparentes e uso responsável dos materiais, para atender necessidades de cuidado com a aparência e promover bem-estar e expressão pessoal para os clientes.",
+      "lid": "Oferecer serviços de beleza e estética em Campos dos Goytacazes e região, com profissionais capacitados e respeito à individualidade, para atender necessidades de cuidado com a aparência e promover bem-estar e expressão pessoal para os clientes.",
+      "est": "Oferecer serviços de beleza e estética em Campos dos Goytacazes e região, com técnicas atualizadas e serviços adaptados a novos interesses, para atender necessidades de cuidado com a aparência e promover bem-estar e expressão pessoal para os clientes."
+    },
+    "Marca de calçados": {
+      "mkt": "Desenvolver calçados em todo o Brasil, com escuta dos consumidores e informações claras sobre os modelos, para atender necessidades de conforto no dia a dia e acompanhar a rotina de pessoas com diferentes estilos.",
+      "ops": "Desenvolver calçados em todo o Brasil, com materiais bem selecionados e controle de acabamento, para atender necessidades de conforto no dia a dia e acompanhar a rotina de pessoas com diferentes estilos.",
+      "fin": "Desenvolver calçados em todo o Brasil, com produção eficiente e opções de bom custo-benefício, para atender necessidades de conforto no dia a dia e acompanhar a rotina de pessoas com diferentes estilos.",
+      "lid": "Desenvolver calçados em todo o Brasil, com equipes qualificadas e valorização dos parceiros, para atender necessidades de conforto no dia a dia e acompanhar a rotina de pessoas com diferentes estilos.",
+      "est": "Desenvolver calçados em todo o Brasil, com novos materiais e designs voltados a diferentes usos, para atender necessidades de conforto no dia a dia e acompanhar a rotina de pessoas com diferentes estilos."
+    }
+  },
+  "sustentabilidade": {
+    "Empresa de reciclagem": {
+      "mkt": "Coletar e encaminhar materiais para reciclagem em Campos dos Goytacazes e região, com orientação clara sobre separação e mobilização da comunidade, para reduzir o descarte inadequado de resíduos e beneficiar moradores, empresas e trabalhadores da reciclagem.",
+      "ops": "Coletar e encaminhar materiais para reciclagem em Campos dos Goytacazes e região, com coleta organizada e destinação responsável, para reduzir o descarte inadequado de resíduos e beneficiar moradores, empresas e trabalhadores da reciclagem.",
+      "fin": "Coletar e encaminhar materiais para reciclagem em Campos dos Goytacazes e região, com rotas eficientes e parcerias economicamente viáveis, para reduzir o descarte inadequado de resíduos e beneficiar moradores, empresas e trabalhadores da reciclagem.",
+      "lid": "Coletar e encaminhar materiais para reciclagem em Campos dos Goytacazes e região, com valorização dos trabalhadores e cooperação entre parceiros, para reduzir o descarte inadequado de resíduos e beneficiar moradores, empresas e trabalhadores da reciclagem.",
+      "est": "Coletar e encaminhar materiais para reciclagem em Campos dos Goytacazes e região, com novas soluções de coleta e aproveitamento de materiais, para reduzir o descarte inadequado de resíduos e beneficiar moradores, empresas e trabalhadores da reciclagem."
+    },
+    "Marca de produtos biodegradáveis": {
+      "mkt": "Produzir itens biodegradáveis em todo o Brasil, com informações claras sobre uso e condições de descarte, para ampliar alternativas aos materiais de difícil decomposição e apoiar escolhas de menor impacto para consumidores e empresas.",
+      "ops": "Produzir itens biodegradáveis em todo o Brasil, com controle de qualidade e seleção criteriosa de materiais, para ampliar alternativas aos materiais de difícil decomposição e apoiar escolhas de menor impacto para consumidores e empresas.",
+      "fin": "Produzir itens biodegradáveis em todo o Brasil, com produção eficiente e preços transparentes, para ampliar alternativas aos materiais de difícil decomposição e apoiar escolhas de menor impacto para consumidores e empresas.",
+      "lid": "Produzir itens biodegradáveis em todo o Brasil, com equipes capacitadas e fornecedores responsáveis, para ampliar alternativas aos materiais de difícil decomposição e apoiar escolhas de menor impacto para consumidores e empresas.",
+      "est": "Produzir itens biodegradáveis em todo o Brasil, com pesquisa de materiais e desenvolvimento de novas aplicações, para ampliar alternativas aos materiais de difícil decomposição e apoiar escolhas de menor impacto para consumidores e empresas."
+    },
+    "Consultoria em energia solar": {
+      "mkt": "Orientar projetos de energia solar em Campos dos Goytacazes e região, com explicações claras e diálogo sobre as necessidades dos clientes, para facilitar a adoção de fontes renováveis e ajudar famílias e empresas a fazer escolhas energéticas conscientes.",
+      "ops": "Orientar projetos de energia solar em Campos dos Goytacazes e região, com avaliação técnica cuidadosa e planejamento da implantação, para facilitar a adoção de fontes renováveis e ajudar famílias e empresas a fazer escolhas energéticas conscientes.",
+      "fin": "Orientar projetos de energia solar em Campos dos Goytacazes e região, com análise de viabilidade e estimativas transparentes de custos, para facilitar a adoção de fontes renováveis e ajudar famílias e empresas a fazer escolhas energéticas conscientes.",
+      "lid": "Orientar projetos de energia solar em Campos dos Goytacazes e região, com profissionais capacitados e cooperação entre parceiros, para facilitar a adoção de fontes renováveis e ajudar famílias e empresas a fazer escolhas energéticas conscientes.",
+      "est": "Orientar projetos de energia solar em Campos dos Goytacazes e região, com soluções atualizadas e atenção a novas possibilidades de uso, para facilitar a adoção de fontes renováveis e ajudar famílias e empresas a fazer escolhas energéticas conscientes."
+    },
+    "Horta urbana e agricultura sustentável": {
+      "mkt": "Cultivar e comercializar hortaliças em Campos dos Goytacazes e região, com diálogo com os consumidores e informação sobre o cultivo, para aproximar alimentos frescos da comunidade e ampliar o acesso de famílias e restaurantes à produção local.",
+      "ops": "Cultivar e comercializar hortaliças em Campos dos Goytacazes e região, com manejo cuidadoso do solo e planejamento das colheitas, para aproximar alimentos frescos da comunidade e ampliar o acesso de famílias e restaurantes à produção local.",
+      "fin": "Cultivar e comercializar hortaliças em Campos dos Goytacazes e região, com redução de perdas e uso eficiente de água e insumos, para aproximar alimentos frescos da comunidade e ampliar o acesso de famílias e restaurantes à produção local.",
+      "lid": "Cultivar e comercializar hortaliças em Campos dos Goytacazes e região, com cooperação entre produtores e valorização do trabalho local, para aproximar alimentos frescos da comunidade e ampliar o acesso de famílias e restaurantes à produção local.",
+      "est": "Cultivar e comercializar hortaliças em Campos dos Goytacazes e região, com técnicas sustentáveis e novas formas de distribuição, para aproximar alimentos frescos da comunidade e ampliar o acesso de famílias e restaurantes à produção local."
+    },
+    "Startup de economia circular": {
+      "mkt": "Criar soluções de reaproveitamento de materiais em todo o Brasil, com conexão entre parceiros e comunicação clara sobre o reaproveitamento, para reduzir desperdícios e prolongar a vida dos recursos e ajudar empresas e comunidades a transformar resíduos em oportunidades.",
+      "ops": "Criar soluções de reaproveitamento de materiais em todo o Brasil, com rastreabilidade dos materiais e processos bem organizados, para reduzir desperdícios e prolongar a vida dos recursos e ajudar empresas e comunidades a transformar resíduos em oportunidades.",
+      "fin": "Criar soluções de reaproveitamento de materiais em todo o Brasil, com modelos economicamente viáveis e redução de perdas, para reduzir desperdícios e prolongar a vida dos recursos e ajudar empresas e comunidades a transformar resíduos em oportunidades.",
+      "lid": "Criar soluções de reaproveitamento de materiais em todo o Brasil, com equipes colaborativas e inclusão de parceiros locais, para reduzir desperdícios e prolongar a vida dos recursos e ajudar empresas e comunidades a transformar resíduos em oportunidades.",
+      "est": "Criar soluções de reaproveitamento de materiais em todo o Brasil, com novos usos para materiais e modelos de negócio circulares, para reduzir desperdícios e prolongar a vida dos recursos e ajudar empresas e comunidades a transformar resíduos em oportunidades."
+    },
+    "Marca de moda sustentável": {
+      "mkt": "Criar roupas com materiais e processos de menor impacto em todo o Brasil, com transparência sobre a origem das peças e diálogo com os clientes, para reduzir desperdícios na produção de moda e oferecer escolhas responsáveis a consumidores e valorizar quem produz.",
+      "ops": "Criar roupas com materiais e processos de menor impacto em todo o Brasil, com aproveitamento de tecidos e controle da qualidade, para reduzir desperdícios na produção de moda e oferecer escolhas responsáveis a consumidores e valorizar quem produz.",
+      "fin": "Criar roupas com materiais e processos de menor impacto em todo o Brasil, com planejamento de produção e preços transparentes, para reduzir desperdícios na produção de moda e oferecer escolhas responsáveis a consumidores e valorizar quem produz.",
+      "lid": "Criar roupas com materiais e processos de menor impacto em todo o Brasil, com valorização dos trabalhadores e parcerias responsáveis, para reduzir desperdícios na produção de moda e oferecer escolhas responsáveis a consumidores e valorizar quem produz.",
+      "est": "Criar roupas com materiais e processos de menor impacto em todo o Brasil, com design durável e novas formas de reutilizar materiais, para reduzir desperdícios na produção de moda e oferecer escolhas responsáveis a consumidores e valorizar quem produz."
+    }
+  }
+};
+
+    const ESTILOS = {
+      analitico: 'E o seu jeito de decidir é olhando pros números: você confia em dados antes de dar o próximo passo.',
+      criativo: 'E o seu jeito de decidir é pela intuição: as melhores ideias chegam quando você deixa a criatividade guiar.',
+      colaborativo: 'E o seu jeito de decidir é junto com os outros: você sabe que uma boa conversa vale mais que uma decisão solitária.',
+      agil: 'E o seu jeito de decidir é testando rápido: você prefere ajustar o caminho andando a ficar planejando pra sempre.',
+      planejador: 'E o seu jeito de decidir é planejando: você gosta de ter cada passo mapeado antes de agir.'
+    };
+
+    const SETORES = {
+      tecnologia: { tag: 'Tecnologia e Inovação', palavras: ['Nex', 'Byte', 'Nova', 'Code', 'Pulse', 'Quantum'] },
+      saude: { tag: 'Saúde e Bem-Estar', palavras: ['Vita', 'Bem', 'Viva', 'Pulso', 'Zenith', 'Cuidar'] },
+      alimentacao: { tag: 'Alimentação e Gastronomia', palavras: ['Sabor', 'Gourmet', 'Raiz', 'Colher', 'Origem', 'Fogo'] },
+      moda: { tag: 'Moda e Beleza', palavras: ['Estilo', 'Trend', 'Look', 'Tecido', 'Aura', 'Vogue'] },
+      sustentabilidade: { tag: 'Sustentabilidade e Meio Ambiente', palavras: ['Eco', 'Verde', 'Raiz', 'Terra', 'Bio', 'Renova'] }
+    };
+
+    const PALAVRAS_PERFIL = {
+      mkt: ['Conecta', 'Voz', 'Buzz', 'Share', 'Alcance'],
+      ops: ['Flow', 'Sistema', 'Precisão', 'Método', 'Órbita'],
+      fin: ['Capital', 'Vault', 'Firme', 'Base', 'Prosperis'],
+      lid: ['Liderança', 'Impulso', 'Vanguarda', 'Comando', 'Rumo'],
+      est: ['Visão', 'Estratégia', 'Horizonte', 'Next', 'Insight']
+    };
+
+    // A pedido: sempre com razão social de verdade, variando entre os dois
+    // tipos societários mais comuns no Brasil.
+    const SUFIXOS_EMPRESA = [' Ltda.', ' S.A.'];
+
+    function escolherAleatorio(lista) {
+      return lista[Math.floor(Math.random() * lista.length)];
+    }
+
+    function descapitalizar(texto) {
+      return texto.charAt(0).toLowerCase() + texto.slice(1);
+    }
+
+    // Número no formato de CNPJ, só para dar clima de "documento oficial"
+    // no cartão — deixamos claro que é fictício em todo lugar que aparece.
+    function gerarRegistroFicticio() {
+      function bloco(tamanho) {
+        let numero = '';
+        for (let i = 0; i < tamanho; i++) { numero += Math.floor(Math.random() * 10); }
+        return numero;
+      }
+      return bloco(2) + '.' + bloco(3) + '.' + bloco(3) + '/0001-' + bloco(2);
+    }
+
+    const PERGUNTAS = [
+      {
+        titulo: 'Se você pudesse criar uma empresa hoje, em qual área ela estaria?', eixo: 'setor',
+        opcoes: [
+          { texto: 'Tecnologia e inovação', valor: 'tecnologia' },
+          { texto: 'Saúde e bem-estar', valor: 'saude' },
+          { texto: 'Alimentação e gastronomia', valor: 'alimentacao' },
+          { texto: 'Moda e beleza', valor: 'moda' },
+          { texto: 'Sustentabilidade e meio ambiente', valor: 'sustentabilidade' }
+        ]
+      },
+      {
+        titulo: 'Qual seria seu maior superpoder como empresário?', eixo: 'perfil',
+        opcoes: [
+          { texto: 'Convencer pessoas e divulgar ideias', valor: 'mkt' },
+          { texto: 'Organizar processos e colocar tudo em ordem', valor: 'ops' },
+          { texto: 'Cuidar do dinheiro e tomar decisões financeiras', valor: 'fin' },
+          { texto: 'Liderar e motivar uma equipe', valor: 'lid' },
+          { texto: 'Enxergar oportunidades antes dos outros', valor: 'est' }
+        ]
+      },
+      {
+        titulo: 'Como você prefere tomar decisões importantes?', eixo: 'estilo',
+        opcoes: [
+          { texto: 'Analisando dados e números', valor: 'analitico' },
+          { texto: 'Usando criatividade e intuição', valor: 'criativo' },
+          { texto: 'Conversando com outras pessoas antes', valor: 'colaborativo' },
+          { texto: 'Testando rapidamente e ajustando depois', valor: 'agil' },
+          { texto: 'Planejando tudo antes de agir', valor: 'planejador' }
+        ]
+      },
+      {
+        titulo: 'Qual personalidade combina mais com a empresa que você gostaria de criar?', eixo: 'perfil',
+        opcoes: [
+          { texto: 'Leão — ousada e confiante', emoji: '🦁', valor: 'lid' },
+          { texto: 'Coruja — inteligente e analítica', emoji: '🦉', valor: 'fin' },
+          { texto: 'Formiga — organizada e trabalhadora', emoji: '🐜', valor: 'ops' },
+          { texto: 'Golfinho — comunicativa e conectada', emoji: '🐬', valor: 'mkt' },
+          { texto: 'Raposa — estratégica e esperta', emoji: '🦊', valor: 'est' }
+        ]
+      },
+      {
+        titulo: 'Se sua empresa começasse a crescer muito, qual seria sua primeira prioridade?', eixo: 'perfil',
+        opcoes: [
+          { texto: 'Fazer a marca ficar conhecida', emoji: '📣', valor: 'mkt' },
+          { texto: 'Montar uma equipe excelente', emoji: '👥', valor: 'lid' },
+          { texto: 'Organizar as finanças para crescer com segurança', emoji: '💰', valor: 'fin' },
+          { texto: 'Melhorar processos e aumentar a eficiência', emoji: '⚙️', valor: 'ops' },
+          { texto: 'Criar novos produtos e entrar em novos mercados', emoji: '🚀', valor: 'est' }
+        ]
+      }
+    ];
+
+    let indicePergunta = 0;
+    // Guardamos só a resposta escolhida em cada pergunta (por índice). A
+    // pontuação por perfil é sempre recalculada a partir daqui (nunca
+    // acumulada aos poucos), então voltar e trocar uma resposta nunca
+    // deixa "resto" de uma escolha antiga contando junto.
+    let respostasEscolhidas = [];
+
+    function iniciarPerguntas() {
+      if (timerAvancoPergunta) { clearTimeout(timerAvancoPergunta); timerAvancoPergunta = null; }
+      indicePergunta = 0;
+      respostasEscolhidas = [];
+      mostrarTela('tela-pergunta');
+      renderizarPergunta();
+    }
+
+    function renderizarPergunta() {
+      const pergunta = PERGUNTAS[indicePergunta];
+      document.getElementById('pergunta-contador').textContent = 'Pergunta ' + (indicePergunta + 1) + ' de ' + PERGUNTAS.length;
+      document.getElementById('progresso-fill').style.width = ((indicePergunta / PERGUNTAS.length) * 100) + '%';
+      document.getElementById('pergunta-titulo').textContent = pergunta.titulo;
+
+      const valorJaEscolhido = respostasEscolhidas[indicePergunta];
+      const container = document.getElementById('opcoes-pergunta');
+      container.innerHTML = '';
+      pergunta.opcoes.forEach(function (opcao) {
+        const botao = document.createElement('button');
+        botao.type = 'button';
+        botao.className = 'opcao-pergunta' + (opcao.valor === valorJaEscolhido ? ' selecionada' : '');
+        botao.innerHTML = (opcao.emoji ? '<span class="opcao-emoji">' + opcao.emoji + '</span>' : '') + '<span>' + opcao.texto + '</span>';
+        botao.addEventListener('click', function () {
+          selecionarOpcao(opcao, botao);
+        });
+        container.appendChild(botao);
+      });
+    }
+
+    // Guarda o timeout do avanço automático — evita que um duplo toque
+    // rápido nas opções (bem comum em criançada empolgada num touchscreen)
+    // dispare dois avanços e pule uma pergunta inteira sem ela ser
+    // respondida, e evita que esse avanço "atrasado" dispare depois que o
+    // aluno já tiver clicado em "← Voltar".
+    let timerAvancoPergunta = null;
+
+    function selecionarOpcao(opcao, botaoClicado) {
+      if (timerAvancoPergunta) { return; } // já tem um avanço agendado: ignora toques extras
+
+      document.querySelectorAll('.opcao-pergunta').forEach(function (b) { b.classList.remove('selecionada'); });
+      botaoClicado.classList.add('selecionada');
+
+      respostasEscolhidas[indicePergunta] = opcao.valor;
+
+      // pequena pausa para o aluno ver a opção marcada antes de avançar
+      timerAvancoPergunta = setTimeout(function () {
+        timerAvancoPergunta = null;
+        indicePergunta++;
+        if (indicePergunta < PERGUNTAS.length) {
+          renderizarPergunta();
+        } else {
+          document.getElementById('progresso-fill').style.width = '100%';
+          finalizarPerguntas();
+        }
+      }, 320);
+    }
+
+    // "← Voltar": volta uma pergunta (mantendo a resposta anterior marcada,
+    // caso o aluno só queira conferir) ou volta pra confirmação do
+    // cadastro se estiver na primeira pergunta.
+    function voltarPergunta() {
+      // Cancela um avanço automático pendente (aluno clicou numa opção e,
+      // dentro da pausa de 320ms, se arrependeu e apertou "Voltar").
+      if (timerAvancoPergunta) {
+        clearTimeout(timerAvancoPergunta);
+        timerAvancoPergunta = null;
+      }
+
+      if (indicePergunta === 0) {
+        mostrarTela('tela-cadastro-ok');
+        return;
+      }
+      indicePergunta--;
+      renderizarPergunta();
+    }
+
+    // Reconstrói pontos por perfil, setor, estilo e a resposta da
+    // pergunta-4 a partir do histórico completo de escolhas — chamado só
+    // na hora de fechar o resultado, nunca durante as perguntas.
+    function recalcularAPartirDoHistorico() {
+      const pontos = { mkt: 0, ops: 0, fin: 0, lid: 0, est: 0 };
+      const respostas = {};
+      let animalQ4 = null;
+      PERGUNTAS.forEach(function (pergunta, indice) {
+        const valor = respostasEscolhidas[indice];
+        if (valor === undefined) { return; }
+        if (pergunta.eixo === 'perfil') {
+          pontos[valor] = (pontos[valor] || 0) + 1;
+          if (indice === 3) { animalQ4 = valor; }
+        } else {
+          respostas[pergunta.eixo] = valor;
+        }
+        respostas['pergunta_' + (indice + 1)] = valor;
+      });
+      return { pontos: pontos, respostas: respostas, animalQ4: animalQ4 };
+    }
+
+    // Com só 3 votos (perguntas 2, 4 e 5) distribuídos entre 5 perfis, um
+    // empate só pode ser 1-1-1 entre três perfis — nesse caso, desempatamos
+    // pela pergunta 4 (a mais "de identidade", com o animal/emoji).
+    function calcularPerfilVencedor(pontos, animalQ4) {
+      let maior = -1;
+      let vencedores = [];
+      Object.keys(pontos).forEach(function (chave) {
+        if (pontos[chave] > maior) {
+          maior = pontos[chave];
+          vencedores = [chave];
+        } else if (pontos[chave] === maior) {
+          vencedores.push(chave);
+        }
+      });
+      if (vencedores.length > 1 && animalQ4 && vencedores.indexOf(animalQ4) !== -1) {
+        return animalQ4;
+      }
+      return vencedores[0];
+    }
+
+    // Gera o nome combinando um banco de palavras do setor com um do
+    // perfil vencedor — em vez de guardar um nome fixo para cada uma das
+    // combinações possíveis, compomos o nome no momento.
+    function gerarNomeEmpresa(setorChave, perfilChave) {
+      const p1 = escolherAleatorio(SETORES[setorChave].palavras);
+      const p2 = escolherAleatorio(PALAVRAS_PERFIL[perfilChave]);
+      const sufixo = escolherAleatorio(SUFIXOS_EMPRESA);
+      return p1 + p2 + sufixo;
+    }
+
+    // Todo aluno é sempre "CEO e Fundador(a)" da própria empresa — o
+    // perfil vencedor (Marketing, Operações...) já aparece no resultado.
+    const CARGO_PADRAO = 'CEO e Fundador(a)';
+
+    function finalizarPerguntas() {
+      mostrarTela('tela-processando');
+      setTimeout(function () {
+        const calculo = recalcularAPartirDoHistorico();
+        const perfilChave = calcularPerfilVencedor(calculo.pontos, calculo.animalQ4);
+        const setorChave = calculo.respostas.setor;
+        const estiloChave = calculo.respostas.estilo;
+        const perfil = PERFIS[perfilChave];
+        const nomeEmpresa = gerarNomeEmpresa(setorChave, perfilChave);
+        // Corrige o "ponto duplo" que aparece quando o nome termina em
+        // "Ltda."/"S.A." bem no final da frase do slogan.
+        const sloganFinal = perfil.slogan.replace('{nome}', nomeEmpresa).replace(/\.\.+/g, '.');
+        const ramo = escolherAleatorio(RAMOS[setorChave]);
+        const missao = 'Missão: ' + MISSOES[setorChave][ramo][perfilChave];
+        const registroFicticio = gerarRegistroFicticio();
+        const dataFundacao = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        const dadosAluno = alunoAtual || {};
+        const nomeFundador = dadosAluno.nome || 'Futuro(a) Administrador(a)';
+
+        const empresaGerada = {
+          nome: nomeEmpresa,
+          setor: setorChave,
+          ramo: ramo,
+          perfil: perfilChave,
+          perfil_nome: perfil.nome,
+          animal: perfil.animal,
+          estilo: estiloChave,
+          slogan: sloganFinal,
+          missao: missao,
+          fundador: nomeFundador,
+          cargo: CARGO_PADRAO,
+          data_fundacao: dataFundacao,
+          registro_ficticio: registroFicticio
+        };
+
+        exibirResultado(empresaGerada, calculo.pontos);
+      }, 1400);
+    }
+
+    // Monta o link da cartao.html com os dados da empresa embutidos na
+    // própria URL (nada é lido do banco aqui) e desenha o QR code na tela
+    // de revelação. Se a biblioteca do QR não carregar (ex.: sem internet
+    // no totem), cai num link/botão manual pra não travar a experiência.
+    function exibirResultado(empresa, pontos) {
+      const perfil = PERFIS[empresa.perfil];
+      document.getElementById('revelacao-animal').textContent = perfil.emoji;
+      document.getElementById('revelacao-nome').textContent = empresa.nome;
+      document.getElementById('revelacao-slogan').textContent = empresa.slogan;
+      document.getElementById('revelacao-setor').textContent = SETORES[empresa.setor].tag;
+      document.getElementById('revelacao-ramo').textContent = empresa.ramo;
+      document.getElementById('revelacao-perfil-titulo').textContent = 'Seu DNA de Administrador: ' + perfil.nome;
+      document.getElementById('revelacao-dna').textContent = perfil.frase + ' ' + ESTILOS[empresa.estilo];
+      document.getElementById('revelacao-missao').textContent = empresa.missao;
+      document.getElementById('revelacao-fundador').textContent = empresa.fundador;
+      document.getElementById('revelacao-cargo').textContent = empresa.cargo;
+      document.getElementById('revelacao-data').textContent = empresa.data_fundacao;
+      document.getElementById('revelacao-registro').textContent = empresa.registro_ficticio + ' (fictício)';
+      gerarQrCartao(empresa);
+      mostrarTela('tela-revelacao');
+    }
+
+    function gerarQrCartao(empresaGerada) {
+      const caixa = document.getElementById('qr-cartao');
+      const linkFallback = document.getElementById('link-cartao-manual');
+      caixa.innerHTML = '';
+      linkFallback.style.display = 'none';
+      const linkAparelho = document.getElementById('btn-foto-aparelho');
+      linkAparelho.hidden = true;
+      linkAparelho.removeAttribute('href');
+
+      const payload = {
+        n: empresaGerada.fundador,
+        e: empresaGerada.nome,
+        s: empresaGerada.slogan,
+        se: SETORES[empresaGerada.setor] ? SETORES[empresaGerada.setor].tag : '',
+        st: empresaGerada.setor, // chave do setor (ex.: "moda") — usada no card pra escolher o ícone certo
+        r: empresaGerada.ramo,
+        c: empresaGerada.cargo
+      };
+
+      let textoCodificado;
+      try {
+        textoCodificado = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      } catch (erro) {
+        console.error('Falha ao codificar dados do card:', erro);
+        return;
+      }
+
+      const baseUrl = new URL('.', location.href).href;
+      const linkCartao = baseUrl + 'cartao.html?d=' + encodeURIComponent(textoCodificado);
+      // Para o botão "Voltar ao resultado" do card (só no totem), o
+      // resultado completo vai junto no link — nada fica guardado.
+      let retorno = '';
+      try {
+        retorno = '&r=' + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(empresaGerada)))));
+      } catch (erro) { retorno = ''; }
+      linkAparelho.href = linkCartao + '&origem=app' + retorno;
+      linkAparelho.hidden = false;
+
+      try {
+        if (window.QRCode) {
+          new QRCode(caixa, {
+            text: linkCartao,
+            width: 168,
+            height: 168,
+            colorDark: '#0E3880',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+          return;
+        }
+      } catch (erro) {
+        console.error('Falha ao gerar QR code:', erro);
+      }
+
+      // Sem a biblioteca de QR: mostra um botão que abre a mesma página
+      // direto (útil se alguém acessar o totem pelo próprio celular).
+      linkFallback.href = linkCartao;
+      linkFallback.style.display = 'inline-block';
+    }
+
+
+    // ---------- Tela 3 (confirmação) → Bloco 3 (as 5 perguntas) ----------
+    document.getElementById('btn-ir-perguntas').addEventListener('click', function () {
+      iniciarPerguntas();
+    });
+
+    document.getElementById('btn-pergunta-voltar').addEventListener('click', function () {
+      voltarPergunta();
+    });
+
+    // ---------- Tela de revelação ----------
+    document.getElementById('btn-refazer').addEventListener('click', function () {
+      reiniciarQuiosque();
+    });
+
+    // ==========================================================
+    // TIMER DE INATIVIDADE — o totem fica ligado o dia inteiro no
+    // evento; se um aluno sair andando no meio da experiência (ou
+    // esquecer a tela na revelação), sozinho ele volta pro início
+    // depois de um tempo, pronto pro próximo aluno usar.
+    // ==========================================================
+    const TEMPO_ATE_AVISO_MS = 120000;  // 2 minutos sem nenhuma interação
+    const TEMPO_CONTAGEM_SEGUNDOS = 15; // +15s com o aviso na tela antes de resetar
+
+    let timerAvisoInatividade = null;
+    let intervaloContagemInatividade = null;
+    let segundosRestantesInatividade = TEMPO_CONTAGEM_SEGUNDOS;
+
+    const overlayInatividade = document.getElementById('overlay-inatividade');
+    const numeroInatividade = document.getElementById('overlay-inatividade-numero');
+
+    function telaAtualEhInicial() {
+      const inicial = document.getElementById('tela-boas-vindas');
+      return inicial && inicial.classList.contains('screen--ativa');
+    }
+
+    // Limpa tudo (nome, respostas, QR do card anterior) e volta
+    // pra tela inicial — usada tanto pelo botão "Refazer" quanto pelo
+    // reset automático por inatividade, pra sempre deixar o totem pronto
+    // pro próximo aluno sem sobra do aluno anterior.
+    function reiniciarQuiosque() {
+      cancelarAvisoInatividade();
+
+      alunoAtual = null;
+
+      const formulario = document.getElementById('form-cadastro');
+      if (formulario) { formulario.reset(); }
+      const erroCadastro = document.getElementById('erro-cadastro');
+      if (erroCadastro) { erroCadastro.textContent = ''; }
+
+      if (timerAvancoPergunta) { clearTimeout(timerAvancoPergunta); timerAvancoPergunta = null; }
+      indicePergunta = 0;
+      respostasEscolhidas = [];
+
+      const qrCartao = document.getElementById('qr-cartao');
+      if (qrCartao) { qrCartao.innerHTML = ''; }
+      const linkCartaoManual = document.getElementById('link-cartao-manual');
+      if (linkCartaoManual) { linkCartaoManual.style.display = 'none'; }
+      const linkFoto = document.getElementById('btn-foto-aparelho');
+      linkFoto.hidden = true;
+      linkFoto.removeAttribute('href');
+      if (location.hash) { history.replaceState(null, '', location.pathname + location.search); }
+
+      mostrarTela('tela-boas-vindas');
+    }
+
+    function mostrarOverlayInatividade() {
+      segundosRestantesInatividade = TEMPO_CONTAGEM_SEGUNDOS;
+      numeroInatividade.textContent = segundosRestantesInatividade;
+      overlayInatividade.classList.add('visivel');
+
+      clearInterval(intervaloContagemInatividade);
+      intervaloContagemInatividade = setInterval(function () {
+        segundosRestantesInatividade -= 1;
+        numeroInatividade.textContent = Math.max(segundosRestantesInatividade, 0);
+        if (segundosRestantesInatividade <= 0) {
+          clearInterval(intervaloContagemInatividade);
+          reiniciarQuiosque();
+        }
+      }, 1000);
+    }
+
+    function cancelarAvisoInatividade() {
+      overlayInatividade.classList.remove('visivel');
+      clearInterval(intervaloContagemInatividade);
+      intervaloContagemInatividade = null;
+    }
+
+    // Reagenda o aviso a cada interação real do aluno (toque, digitação)
+    // e também a cada troca de tela — inclusive as automáticas, como
+    // "processando" → "revelação", pra contar o tempo parado na tela
+    // que está na frente, não desde o início da experiência.
+    function agendarAvisoInatividade() {
+      clearTimeout(timerAvisoInatividade);
+      if (telaAtualEhInicial()) { return; } // já está em repouso, nada a resetar
+      timerAvisoInatividade = setTimeout(mostrarOverlayInatividade, TEMPO_ATE_AVISO_MS);
+    }
+
+    ['pointerdown', 'touchstart', 'keydown', 'input'].forEach(function (evento) {
+      document.addEventListener(evento, function () {
+        if (overlayInatividade.classList.contains('visivel')) {
+          cancelarAvisoInatividade();
+        }
+        agendarAvisoInatividade();
+      }, { passive: true });
+    });
+
+    document.getElementById('btn-continuar-usando').addEventListener('click', function () {
+      cancelarAvisoInatividade();
+      agendarAvisoInatividade();
+    });
+
+    if (location.hash.indexOf('#resultado=') === 0) {
+      try {
+        const codificado = decodeURIComponent(location.hash.slice('#resultado='.length));
+        const empresa = JSON.parse(decodeURIComponent(escape(atob(codificado))));
+        // Tira os dados da barra de endereço assim que o resultado é exibido.
+        history.replaceState(null, '', location.pathname);
+        if (empresa && empresa.perfil && PERFIS[empresa.perfil]) {
+          alunoAtual = { nome: empresa.fundador };
+          exibirResultado(empresa, null);
+        }
+      } catch (erro) { console.warn('Resultado indisponível para retorno.'); }
+    }
+    agendarAvisoInatividade();
+  </script>
+</body>
+</html>
