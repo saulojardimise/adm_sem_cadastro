@@ -105,6 +105,42 @@
     max-width: 340px;
   }
 
+  /* Câmera ao vivo (webcam do computador ou câmera do celular) */
+  .webcam-caixa {
+    position: relative;
+    width: 100%;
+    margin-top: 18px;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #0b1a38;
+    aspect-ratio: 3 / 4;
+    box-shadow: 0 18px 36px rgba(14, 56, 128, 0.22);
+  }
+  .webcam-caixa video {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transform: scaleX(-1); /* espelhado, como um espelho */
+  }
+  .webcam-contagem {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 96px; font-weight: 800; color: #fff; text-shadow: 0 6px 24px rgba(0,0,0,0.45);
+    pointer-events: none;
+  }
+  .webcam-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .webcam-flash.ativo { opacity: 0.9; transition: none; }
+  .btn-camera--secundario {
+    background: #fff; color: var(--azul); box-shadow: none; border: 2px solid var(--azul-claro); margin-top: 12px;
+  }
+  .btn-camera:disabled { opacity: 0.6; cursor: default; }
+
+  .creditos {
+    margin-top: auto;
+    padding-top: 28px;
+    color: var(--texto-suave);
+    font-size: 11px;
+    opacity: 0.7;
+    text-align: center;
+  }
+
   .spinner {
     width: 52px;
     height: 52px;
@@ -230,12 +266,24 @@
       <div class="icone-camera">📸</div>
       <h1 id="titulo-camera">Hora da sua foto!</h1>
       <p class="subtitulo" id="subtitulo-camera"></p>
-      <label class="btn-camera" for="input-foto">📷 Tirar minha foto</label>
-      <input type="file" accept="image/*" capture="user" id="input-foto">
-      <label class="btn-camera" for="input-galeria">🖼️ Escolher foto do celular</label>
+      <button class="btn-camera" id="btn-tirar-foto" type="button">📷 Tirar minha foto</button>
+      <input type="file" accept="image/*" capture="user" id="input-foto" tabindex="-1" aria-hidden="true">
+      <label class="btn-camera" for="input-galeria">🖼️ Escolher uma foto</label>
       <input type="file" accept="image/*" id="input-galeria">
       <p class="camera-mensagem" id="camera-mensagem" role="status" aria-live="polite"></p>
       <p class="aviso-privacidade">Sua foto é usada apenas neste aparelho, para montar a imagem do card. Ela não é enviada nem guardada em nenhum servidor.</p>
+    </section>
+
+    <!-- ================= TELA: câmera ao vivo ================= -->
+    <section class="tela" id="tela-webcam">
+      <h1>Olhe para a câmera 😄</h1>
+      <div class="webcam-caixa">
+        <video id="webcam-video" autoplay playsinline muted></video>
+        <div class="webcam-contagem" id="webcam-contagem" aria-live="polite"></div>
+        <div class="webcam-flash" id="webcam-flash"></div>
+      </div>
+      <button class="btn-camera" id="btn-capturar" type="button">📸 Tirar foto</button>
+      <button class="btn-camera btn-camera--secundario" id="btn-cancelar-webcam" type="button">Cancelar</button>
     </section>
 
     <!-- ================= TELA: processando ================= -->
@@ -256,6 +304,8 @@
         <button class="btn-acao btn-acao--terciaria" id="btn-outra-foto" type="button">🔄 Trocar foto</button>
       </div>
     </section>
+
+    <footer class="creditos">Desenvolvido pelo Prof. Saulo Jardim e Prof. Túlio Baita</footer>
   </div>
 
   <canvas id="canvas-cartao" width="1080" height="1920"></canvas>
@@ -742,6 +792,103 @@
       leitor.readAsDataURL(arquivo);
     }
     document.getElementById('input-foto').addEventListener('change', receberFoto);
+
+    // ---------- Câmera ao vivo ----------
+    // No computador, o campo de arquivo com "capture" só abre o seletor de
+    // arquivos. Por isso usamos a câmera do navegador (getUserMedia), que
+    // funciona em computador e celular. Se não houver câmera ou a permissão
+    // for negada, caímos no campo de arquivo como antes.
+    const videoWebcam = document.getElementById('webcam-video');
+    const btnCapturar = document.getElementById('btn-capturar');
+    let streamWebcam = null;
+
+    function pararWebcam() {
+      if (streamWebcam) {
+        streamWebcam.getTracks().forEach(function (t) { t.stop(); });
+        streamWebcam = null;
+      }
+      videoWebcam.srcObject = null;
+    }
+
+    function usarSeletorDeArquivo(mensagem) {
+      pararWebcam();
+      mostrarTela('tela-camera');
+      if (mensagem) { mensagemCamera.textContent = mensagem; }
+      const input = document.getElementById('input-foto');
+      input.value = '';
+      input.click();
+    }
+
+    document.getElementById('btn-tirar-foto').addEventListener('click', function () {
+      mensagemCamera.textContent = '';
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        usarSeletorDeArquivo();
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1280 } },
+        audio: false
+      }).then(function (stream) {
+        streamWebcam = stream;
+        videoWebcam.srcObject = stream;
+        btnCapturar.disabled = false;
+        document.getElementById('webcam-contagem').textContent = '';
+        mostrarTela('tela-webcam');
+      }).catch(function (erro) {
+        console.warn('Câmera indisponível:', erro);
+        const negado = erro && (erro.name === 'NotAllowedError' || erro.name === 'SecurityError');
+        pararWebcam();
+        mostrarTela('tela-camera');
+        mensagemCamera.textContent = negado
+          ? 'Não foi possível usar a câmera: permita o acesso à câmera no navegador ou use "Escolher uma foto".'
+          : 'Não encontramos uma câmera neste aparelho. Use "Escolher uma foto".';
+      });
+    });
+
+    btnCapturar.addEventListener('click', function () {
+      if (!streamWebcam) return;
+      btnCapturar.disabled = true;
+      const contagem = document.getElementById('webcam-contagem');
+      let n = 3;
+      contagem.textContent = n;
+      const timer = setInterval(function () {
+        n -= 1;
+        if (n > 0) { contagem.textContent = n; return; }
+        clearInterval(timer);
+        contagem.textContent = '';
+        capturarQuadro();
+      }, 800);
+    });
+
+    function capturarQuadro() {
+      const w = videoWebcam.videoWidth, h = videoWebcam.videoHeight;
+      if (!w || !h) { usarSeletorDeArquivo('A câmera não respondeu. Escolha uma foto.'); return; }
+      const flash = document.getElementById('webcam-flash');
+      flash.classList.add('ativo');
+      setTimeout(function () { flash.classList.remove('ativo'); }, 60);
+      const tela = document.createElement('canvas');
+      tela.width = w; tela.height = h;
+      const c = tela.getContext('2d');
+      // Salva espelhado, igual ao que o aluno viu na pré-visualização.
+      c.translate(w, 0); c.scale(-1, 1);
+      c.drawImage(videoWebcam, 0, 0, w, h);
+      pararWebcam();
+      mostrarTela('tela-processando-foto');
+      const imgFoto = new Image();
+      imgFoto.onload = function () { concluirFoto(imgFoto); };
+      imgFoto.onerror = function () { usarSeletorDeArquivo('Não foi possível usar a foto. Escolha uma imagem.'); };
+      imgFoto.src = tela.toDataURL('image/jpeg', 0.92);
+    }
+
+    document.getElementById('btn-cancelar-webcam').addEventListener('click', function () {
+      pararWebcam();
+      mostrarTela('tela-camera');
+    });
+    // Desliga a câmera se o aluno sair da página ou trocar de aba.
+    window.addEventListener('pagehide', pararWebcam);
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && streamWebcam) { pararWebcam(); mostrarTela('tela-camera'); }
+    });
     document.getElementById('input-galeria').addEventListener('change', receberFoto);
     if (new URLSearchParams(location.search).get('origem') === 'app') {
       document.getElementById('navegacao-card').hidden = false;

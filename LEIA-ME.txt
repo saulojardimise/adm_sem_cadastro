@@ -10,7 +10,9 @@ Páginas:
                           5 perguntas, resultado com perfil + empresa
                           gerada e QR code para o card.
 - cartao.html             Página do card do aluno (aberta pelo QR code):
-                          tira a foto e monta o card para baixar/compartilhar.
+                          tira a foto (câmera ao vivo no celular ou no
+                          computador) ou usa uma foto escolhida, e monta
+                          o card para baixar/compartilhar.
 
 Imagens:
 - logo-faculdade.png            Logo do ISECENSA (topo da página principal).
@@ -55,6 +57,10 @@ PRIVACIDADE — NADA É SALVO
 - O painel de cadastros (gestaodecadastro.html) foi removido.
 - Única conexão externa: o carregamento da biblioteca que desenha o
   QR code (cdnjs.cloudflare.com). Nenhum dado do aluno é enviado.
+
+CÂMERA: o botão "Tirar minha foto" pede permissão para usar a câmera.
+Isso só funciona com o site em https (o GitHub Pages já é https). Se a
+permissão for negada, o aluno pode usar "Escolher uma foto".
 
 IMPORTANTE: ao publicar, apague também o arquivo gestaodecadastro.html
 do repositório/site, se ele ainda estiver lá.
