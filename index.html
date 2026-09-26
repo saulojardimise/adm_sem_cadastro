@@ -2117,19 +2117,226 @@
     };
 
     const SETORES = {
-      tecnologia: { tag: 'Tecnologia e Inovação', palavras: ['Nex', 'Byte', 'Nova', 'Code', 'Pulse', 'Quantum'] },
-      saude: { tag: 'Saúde e Bem-Estar', palavras: ['Vita', 'Bem', 'Viva', 'Pulso', 'Zenith', 'Cuidar'] },
-      alimentacao: { tag: 'Alimentação e Gastronomia', palavras: ['Sabor', 'Gourmet', 'Raiz', 'Colher', 'Origem', 'Fogo'] },
-      moda: { tag: 'Moda e Beleza', palavras: ['Estilo', 'Trend', 'Look', 'Tecido', 'Aura', 'Vogue'] },
-      sustentabilidade: { tag: 'Sustentabilidade e Meio Ambiente', palavras: ['Eco', 'Verde', 'Raiz', 'Terra', 'Bio', 'Renova'] }
+      tecnologia: { tag: 'Tecnologia e Inovação' },
+      saude: { tag: 'Saúde e Bem-Estar' },
+      alimentacao: { tag: 'Alimentação e Gastronomia' },
+      moda: { tag: 'Moda e Beleza' },
+      sustentabilidade: { tag: 'Sustentabilidade e Meio Ambiente' }
     };
 
-    const PALAVRAS_PERFIL = {
-      mkt: ['Conecta', 'Voz', 'Buzz', 'Share', 'Alcance'],
-      ops: ['Flow', 'Sistema', 'Precisão', 'Método', 'Órbita'],
-      fin: ['Capital', 'Vault', 'Firme', 'Base', 'Prosperis'],
-      lid: ['Liderança', 'Impulso', 'Vanguarda', 'Comando', 'Rumo'],
-      est: ['Visão', 'Estratégia', 'Horizonte', 'Next', 'Insight']
+    // Nomes de empresa escritos à mão: 6 por setor × perfil (150 no total),
+    // cada um revisado para soar como uma marca de verdade.
+    const NOMES_EMPRESA = {
+      "tecnologia": {
+        "mkt": [
+          "Conecta Tech",
+          "Voz Digital",
+          "Sinal App",
+          "Linka",
+          "Clique Certo",
+          "Viral Labs"
+        ],
+        "ops": [
+          "Fluxo Tech",
+          "Sistema Ágil",
+          "Byte Preciso",
+          "Código Certo",
+          "Engrenagem Digital",
+          "Ordem Tech"
+        ],
+        "fin": [
+          "Byte Capital",
+          "Cofre Digital",
+          "Base Tech",
+          "Nex Invest",
+          "Código Seguro",
+          "Tech Sólida"
+        ],
+        "lid": [
+          "Nexus Tech",
+          "Rumo Digital",
+          "Impulso Tech",
+          "Pioneira Digital",
+          "Vanguarda Tech",
+          "Comando Tech"
+        ],
+        "est": [
+          "Visão Tech",
+          "Next Code",
+          "Horizonte Digital",
+          "Futura Tech",
+          "Insight Labs",
+          "Quantum Visão"
+        ]
+      },
+      "saude": {
+        "mkt": [
+          "Viva Mais",
+          "Bem Conectado",
+          "Voz da Saúde",
+          "Sorriso Vivo",
+          "Vida em Rede",
+          "Cuidar Junto"
+        ],
+        "ops": [
+          "Vita Equilíbrio",
+          "Rotina Saudável",
+          "Cuidado Certo",
+          "Bem Organizado",
+          "Método Vital",
+          "Clínica Ágil"
+        ],
+        "fin": [
+          "Vita Capital",
+          "Saúde Firme",
+          "Bem Seguro",
+          "Vida Sólida",
+          "Cuidar Invest",
+          "Base Vital"
+        ],
+        "lid": [
+          "Vita Líder",
+          "Pulso Forte",
+          "Rumo Saudável",
+          "Força Vital",
+          "Energia Viva",
+          "Time Bem-Estar"
+        ],
+        "est": [
+          "Vita Futuro",
+          "Zenith Saúde",
+          "Nova Vida",
+          "Horizonte Vital",
+          "Bem Adiante",
+          "Visão Saudável"
+        ]
+      },
+      "alimentacao": {
+        "mkt": [
+          "Sabor que Fala",
+          "Boca a Boca",
+          "Tempero Social",
+          "Sabor em Rede",
+          "Mesa Viral",
+          "Garfo Amigo"
+        ],
+        "ops": [
+          "Cozinha Certa",
+          "Receita Exata",
+          "Sabor no Ponto",
+          "Panela Organizada",
+          "Mesa Pronta",
+          "Fluxo Gourmet"
+        ],
+        "fin": [
+          "Sabor Capital",
+          "Colher de Ouro",
+          "Mesa Farta",
+          "Tempero Rico",
+          "Sabor de Valor",
+          "Celeiro Invest"
+        ],
+        "lid": [
+          "Chef no Comando",
+          "Fogo Alto",
+          "Sabor Líder",
+          "Brasa Forte",
+          "Panela de Ferro",
+          "Chama Viva"
+        ],
+        "est": [
+          "Sabor do Futuro",
+          "Nova Receita",
+          "Próximo Prato",
+          "Horizonte Gourmet",
+          "Semente Gourmet",
+          "Mesa Nova"
+        ]
+      },
+      "moda": {
+        "mkt": [
+          "Look do Dia",
+          "Estilo em Alta",
+          "Trend Social",
+          "Vitrine Viral",
+          "Passarela Pop",
+          "Aura Pop"
+        ],
+        "ops": [
+          "Alinhavo",
+          "Ponto Certo",
+          "Costura Fina",
+          "Molde Exato",
+          "Estilo Prático",
+          "Arara Organizada"
+        ],
+        "fin": [
+          "Tecido Nobre",
+          "Grife Capital",
+          "Estilo Sólido",
+          "Fio de Ouro",
+          "Aura Premium",
+          "Look Invest"
+        ],
+        "lid": [
+          "Estilo Líder",
+          "Passarela Forte",
+          "Vanguarda Moda",
+          "Atitude Fashion",
+          "Ícone Style",
+          "Trend Setter"
+        ],
+        "est": [
+          "Next Look",
+          "Moda Futura",
+          "Trend Visão",
+          "Nova Estação",
+          "Horizonte Fashion",
+          "Próxima Tendência"
+        ]
+      },
+      "sustentabilidade": {
+        "mkt": [
+          "Eco Conecta",
+          "Voz Verde",
+          "Planeta em Rede",
+          "Verde Viral",
+          "Eco Amigo",
+          "Terra Fala"
+        ],
+        "ops": [
+          "Eco Fluxo",
+          "Ciclo Certo",
+          "Recicla Já",
+          "Verde Método",
+          "Separa Bem",
+          "Eco Ordem"
+        ],
+        "fin": [
+          "Verde Capital",
+          "Eco Invest",
+          "Terra Firme",
+          "Semente Rica",
+          "Bio Base",
+          "Raiz Sólida"
+        ],
+        "lid": [
+          "Eco Líder",
+          "Rumo Verde",
+          "Força da Terra",
+          "Guardiões do Verde",
+          "Impulso Eco",
+          "Terra Viva"
+        ],
+        "est": [
+          "Eco Futuro",
+          "Verde Amanhã",
+          "Horizonte Verde",
+          "Nova Terra",
+          "Renova Visão",
+          "Bio Next"
+        ]
+      }
     };
 
     // A pedido: sempre com razão social de verdade, variando entre os dois
@@ -2332,14 +2539,12 @@
       return vencedores[0];
     }
 
-    // Gera o nome combinando um banco de palavras do setor com um do
-    // perfil vencedor — em vez de guardar um nome fixo para cada uma das
-    // combinações possíveis, compomos o nome no momento.
+    // Sorteia um dos nomes prontos do setor + perfil vencedor e acrescenta
+    // a razão social (Ltda. ou S.A.).
     function gerarNomeEmpresa(setorChave, perfilChave) {
-      const p1 = escolherAleatorio(SETORES[setorChave].palavras);
-      const p2 = escolherAleatorio(PALAVRAS_PERFIL[perfilChave]);
+      const base = escolherAleatorio(NOMES_EMPRESA[setorChave][perfilChave]);
       const sufixo = escolherAleatorio(SUFIXOS_EMPRESA);
-      return p1 + p2 + sufixo;
+      return base + sufixo;
     }
 
     // Todo aluno é sempre "CEO e Fundador(a)" da própria empresa — o
